@@ -43,41 +43,51 @@ Add-Type -AssemblyName PresentationFramework
 # Versionsnummer des lokalen Scripts
 $localVersion = "1.0.0"
 
-# URL zur Online-Versionsdatei
-$versionUrl = "https://github.com/Zdministrator/DATEV-Toolbox/blob/main/version.txt"
-$scriptUrl = "https://github.com/Zdministrator/DATEV-Toolbox/blob/main/DATEV-Toolbox.ps1"
+# URL zur Online-Versionsdatei (auf RAW-Content umgestellt)
+$versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
+$scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 
-function Check-ForUpdate {
+function Write-Log($message) {
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $txtLog.AppendText("[$timestamp] $message`n")
+}
+
+function Test-ForUpdate {
     try {
-        $window.txtLog.AppendText("Prüfe auf Updates...`n")
+        Write-Log "Prüfe auf Updates..."
         $remoteVersion = Invoke-RestMethod -Uri $versionUrl -UseBasicParsing
         if ($remoteVersion -and ($remoteVersion -ne $localVersion)) {
-            $window.txtLog.AppendText("Neue Version gefunden: $remoteVersion (aktuell: $localVersion)`n")
-            $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen und Script ersetzen?", "Update verfügbar", 'YesNo', 'Information')
+            Write-Log "Neue Version gefunden: $remoteVersion (aktuell: $localVersion)"
+            $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen?", "Update verfügbar", 'YesNo', 'Information')
             if ($result -eq 'Yes') {
-                $window.txtLog.AppendText("Lade neue Version herunter...`n")
-                Invoke-WebRequest -Uri $scriptUrl -OutFile $MyInvocation.MyCommand.Definition -UseBasicParsing
-                $window.txtLog.AppendText("Update abgeschlossen. Bitte Script neu starten.`n")
-                [System.Windows.MessageBox]::Show("Update abgeschlossen. Bitte Script neu starten.", "Update", 'OK', 'Information')
-                exit
+                $tempFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "DATEV-Toolbox.ps1.new"
+                Write-Log "Lade neue Version herunter..."
+                Invoke-WebRequest -Uri $scriptUrl -OutFile $tempFile -UseBasicParsing
+                Write-Log "Neue Version wurde als $tempFile gespeichert. Bitte das laufende Skript schließen und die Datei manuell ersetzen."
+                [System.Windows.MessageBox]::Show("Neue Version wurde als $tempFile gespeichert.\nBitte das laufende Skript schließen und die Datei manuell ersetzen.", "Update heruntergeladen", 'OK', 'Information')
             } else {
-                $window.txtLog.AppendText("Update abgebrochen durch Benutzer.`n")
+                Write-Log "Update abgebrochen durch Benutzer."
             }
         } else {
-            $window.txtLog.AppendText("Keine neue Version verfügbar.`n")
+            Write-Log "Keine neue Version verfügbar."
         }
     } catch {
-        $window.txtLog.AppendText("Fehler beim Update-Check: $_`n")
+        Write-Log "Fehler beim Update-Check: $_"
     }
 }
-Check-ForUpdate
 
 # XAML laden
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
+# Fenstertitel um Versionsnummer ergänzen
+$window.Title = "DATEV Toolbox v$localVersion"
+
+# Controls referenzieren
+$txtLog = $window.FindName("txtLog")
+
+# Nach dem Laden des Fensters auf Updates prüfen
+Test-ForUpdate
+
 # Fenster anzeigen
 $window.ShowDialog() | Out-Null
-
-# Nach dem Laden des Fensters kannst du Log-Ausgaben so hinzufügen:
-# $window.txtLog.AppendText("Logeintrag`n")
