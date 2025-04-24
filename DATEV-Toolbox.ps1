@@ -1,3 +1,28 @@
+# Versionsnummer des lokalen Scripts
+define $localVersion = "1.0.0"
+
+# URL zur Online-Versionsdatei (z.B. auf GitHub als raw .txt)
+$versionUrl = "https://example.com/DATEV-Toolbox-version.txt"  # Hier eigene URL eintragen
+$scriptUrl = "https://example.com/DATEV-Toolbox.ps1"           # Hier eigene URL eintragen
+
+function Check-ForUpdate {
+    try {
+        $remoteVersion = Invoke-RestMethod -Uri $versionUrl -UseBasicParsing
+        if ($remoteVersion -and ($remoteVersion -ne $localVersion)) {
+            $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen und Script ersetzen?", "Update verfügbar", 'YesNo', 'Information')
+            if ($result -eq 'Yes') {
+                Invoke-WebRequest -Uri $scriptUrl -OutFile $MyInvocation.MyCommand.Definition -UseBasicParsing
+                [System.Windows.MessageBox]::Show("Update abgeschlossen. Bitte Script neu starten.", "Update", 'OK', 'Information')
+                exit
+            }
+        }
+    } catch {
+        # Fehler beim Update-Check ignorieren
+    }
+}
+
+Check-ForUpdate
+
 Add-Type -AssemblyName PresentationFramework
 
 # XAML-Definition für das Fenster
