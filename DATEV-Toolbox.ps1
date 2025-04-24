@@ -41,9 +41,9 @@ Add-Type -AssemblyName PresentationFramework
 "@
 
 # Versionsnummer des lokalen Scripts
-$localVersion = "1.0.0"
+$localVersion = "1.0.1"
 
-# URL zur Online-Versionsdatei (auf RAW-Content umgestellt)
+# URL zur Online-Versionsdatei
 $versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
 $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 
@@ -60,11 +60,19 @@ function Test-ForUpdate {
             Write-Log "Neue Version gefunden: $remoteVersion (aktuell: $localVersion)"
             $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen?", "Update verfügbar", 'YesNo', 'Information')
             if ($result -eq 'Yes') {
-                $tempFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "DATEV-Toolbox.ps1.new"
+                # Sicherstellen, dass der Script-Pfad immer verfügbar ist
+                if ($PSCommandPath) {
+                    $scriptDir = Split-Path -Parent $PSCommandPath
+                } elseif ($MyInvocation.MyCommand.Path) {
+                    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+                } else {
+                    throw 'Konnte den Skriptpfad nicht ermitteln.'
+                }
+                $newScriptPath = Join-Path -Path $scriptDir -ChildPath "DATEV-Toolbox.ps1.new"
                 Write-Log "Lade neue Version herunter..."
-                Invoke-WebRequest -Uri $scriptUrl -OutFile $tempFile -UseBasicParsing
-                Write-Log "Neue Version wurde als $tempFile gespeichert. Bitte das laufende Skript schließen und die Datei manuell ersetzen."
-                [System.Windows.MessageBox]::Show("Neue Version wurde als $tempFile gespeichert.\nBitte das laufende Skript schließen und die Datei manuell ersetzen.", "Update heruntergeladen", 'OK', 'Information')
+                Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
+                Write-Log "Neue Version wurde als $newScriptPath gespeichert. Bitte das laufende Skript schließen und die Datei manuell ersetzen."
+                [System.Windows.MessageBox]::Show("Neue Version wurde als $newScriptPath gespeichert.\nBitte das laufende Skript schließen und die Datei manuell ersetzen.", "Update heruntergeladen", 'OK', 'Information')
             } else {
                 Write-Log "Update abgebrochen durch Benutzer."
             }
