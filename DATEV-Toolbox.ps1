@@ -75,18 +75,40 @@ function Test-ForUpdate {
                 # Sicherstellen, dass der Script-Pfad immer verfügbar ist
                 if ($PSCommandPath) {
                     $scriptDir = Split-Path -Parent $PSCommandPath
+                    $scriptPath = $PSCommandPath
                 }
                 elseif ($MyInvocation.MyCommand.Path) {
                     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+                    $scriptPath = $MyInvocation.MyCommand.Path
                 }
                 else {
                     throw 'Konnte den Skriptpfad nicht ermitteln.'
                 }
                 $newScriptPath = Join-Path -Path $scriptDir -ChildPath "DATEV-Toolbox.ps1.new"
+                $updateScriptPath = Join-Path -Path $scriptDir -ChildPath "Update-DATEV-Toolbox.ps1"
                 Write-Log "Lade neue Version herunter..."
                 Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
-                Write-Log "Neue Version wurde als $newScriptPath gespeichert. Bitte das laufende Skript schließen und die Datei manuell ersetzen."
-                [System.Windows.MessageBox]::Show("Neue Version wurde als $newScriptPath gespeichert.\nBitte das laufende Skript schließen und die Datei manuell ersetzen.", "Update heruntergeladen", 'OK', 'Information')
+                Write-Log "Neue Version wurde als $newScriptPath gespeichert. Update-Vorgang wird vorbereitet."
+
+                # Update-Script erzeugen
+                $updateScript = @"
+Start-Sleep -Seconds 2
+# Warten, bis das Hauptscript nicht mehr läuft
+while (Get-Process -Id $PID -ErrorAction SilentlyContinue) { Start-Sleep -Milliseconds 500 }
+# Ersetzen
+Move-Item -Path '$newScriptPath' -Destination '$scriptPath' -Force
+# Neues Script starten
+Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File ""$scriptPath""'
+# Update-Script löschen
+Remove-Item -Path '$updateScriptPath' -Force
+"@
+                $updateScript = $updateScript -replace '\$PID', $PID
+                Set-Content -Path $updateScriptPath -Value $updateScript -Encoding UTF8
+                Write-Log "Update-Script wurde erstellt: $updateScriptPath"
+                [System.Windows.MessageBox]::Show("Das Programm wird für das Update beendet und automatisch neu gestartet.", "Update wird durchgeführt", 'OK', 'Information')
+                # Update-Script starten und beenden
+                Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$updateScriptPath`"" -WindowStyle Hidden
+                exit
             }
             else {
                 Write-Log "Update abgebrochen durch Benutzer."
@@ -130,28 +152,29 @@ function Register-ToolButton {
         $btn.ToolTip = "${toolName} nicht gefunden: $exe"
         Write-Log "$toolName nicht gefunden und Button deaktiviert: $exe"
         return
-    } else {
+    }
+    else {
         $btn.ToolTip = "$toolName starten"
     }
 
     $btn.Add_Click({
-        try {
-            Start-Process -FilePath $exe
-            Write-Log "$toolName gestartet: $exe"
-        }
-        catch {
-            Write-Log "Fehler beim Start von ${toolName}: $_"
-        }
-    })
+            try {
+                Start-Process -FilePath $exe
+                Write-Log "$toolName gestartet: $exe"
+            }
+            catch {
+                Write-Log "Fehler beim Start von ${toolName}: $_"
+            }
+        })
 }
 
 # Zuordnungstabelle für Buttons und Programme
 $toolButtons = @(
     @{ Button = "btnInstallationsmanager"; Exe = "$env:DATEVPP\PROGRAMM\INSTALL\DvInesInstMan.exe"; Name = "Installationsmanager" },
-    @{ Button = "btnServicetool";         Exe = "$env:DATEVPP\PROGRAMM\SRVTOOL\Srvtool.exe";         Name = "Servicetool" },
-    @{ Button = "btnKonfigDBTools";       Exe = "$env:DATEVPP\PROGRAMM\B0001502\cdbtool.exe";        Name = "KonfigDB-Tools" },
-    @{ Button = "btnEOAufgabenplanung";   Exe = "$env:DATEVPP\PROGRAMM\I0000085\EOControl.exe";      Name = "EO Aufgabenplanung" },
-    @{ Button = "btnEODBconfig";          Exe = "$env:DATEVPP\PROGRAMM\EODB\EODBConfig.exe";         Name = "EODBconfig" }
+    @{ Button = "btnServicetool"; Exe = "$env:DATEVPP\PROGRAMM\SRVTOOL\Srvtool.exe"; Name = "Servicetool" },
+    @{ Button = "btnKonfigDBTools"; Exe = "$env:DATEVPP\PROGRAMM\B0001502\cdbtool.exe"; Name = "KonfigDB-Tools" },
+    @{ Button = "btnEOAufgabenplanung"; Exe = "$env:DATEVPP\PROGRAMM\I0000085\EOControl.exe"; Name = "EO Aufgabenplanung" },
+    @{ Button = "btnEODBconfig"; Exe = "$env:DATEVPP\PROGRAMM\EODB\EODBConfig.exe"; Name = "EODBconfig" }
 )
 
 # Event-Handler für alle Tool-Buttons registrieren
@@ -213,16 +236,16 @@ function Register-WebLinkHandler {
 
 # WebLinks Definition
 $cloudButtons = @(
-    @{ Name = "btnDATEVHilfeCenter";          Url = "https://apps.datev.de/help-center/" },
-    @{ Name = "btnMyDATEVPortal";             Url = "https://apps.datev.de/mydatev" },
-    @{ Name = "btnDATEVUnternehmenOnline";    Url = "https://duo.datev.de/" },
-    @{ Name = "btnLogistikauftragOnline";      Url = "https://apps.datev.de/lao" },
-    @{ Name = "btnLizenzverwaltungOnline";     Url = "https://apps.datev.de/lizenzverwaltung" },
-    @{ Name = "btnDATEVRechteraumOnline";      Url = "https://apps.datev.de/rechteraum" },
+    @{ Name = "btnDATEVHilfeCenter"; Url = "https://apps.datev.de/help-center/" },
+    @{ Name = "btnMyDATEVPortal"; Url = "https://apps.datev.de/mydatev" },
+    @{ Name = "btnDATEVUnternehmenOnline"; Url = "https://duo.datev.de/" },
+    @{ Name = "btnLogistikauftragOnline"; Url = "https://apps.datev.de/lao" },
+    @{ Name = "btnLizenzverwaltungOnline"; Url = "https://apps.datev.de/lizenzverwaltung" },
+    @{ Name = "btnDATEVRechteraumOnline"; Url = "https://apps.datev.de/rechteraum" },
     @{ Name = "btnDATEVRechteverwaltungOnline"; Url = "https://apps.datev.de/rvo-administration" },
-    @{ Name = "btnSmartLoginAdministration";   Url = "https://go.datev.de/smartlogin-administration" },
-    @{ Name = "btnMyDATEVBestandsmanagement";   Url = "https://apps.datev.de/mydata/" },
-    @{ Name = "btnWeitereCloudAnwendungen";    Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" }
+    @{ Name = "btnSmartLoginAdministration"; Url = "https://go.datev.de/smartlogin-administration" },
+    @{ Name = "btnMyDATEVBestandsmanagement"; Url = "https://apps.datev.de/mydata/" },
+    @{ Name = "btnWeitereCloudAnwendungen"; Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" }
 )
 
 foreach ($entry in $cloudButtons) {
