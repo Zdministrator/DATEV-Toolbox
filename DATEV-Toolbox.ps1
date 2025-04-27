@@ -42,7 +42,14 @@ Add-Type -AssemblyName PresentationFramework
             </TabItem>
             <TabItem Header="Downloads">
                 <StackPanel Orientation="Vertical" Margin="10">
+                    <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
+                    <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
+                    <Label Content="Direkt Downloads" FontWeight="Bold" Margin="5"/>
                     <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
+                    <Button Name="btnDownloadFernbetreuungOnline" Content="Fernbetreuung Online" Height="30" Margin="5"/>
+                    <Button Name="btnDownloadBelegtransfer" Content="Belegtransfer V. 5.46" Height="30" Margin="5"/>
+                    <Button Name="btnDownloadServerprep" Content="Serverprep" Height="30" Margin="5"/>
+                    <Button Name="btnDownloadDeinstallationsnacharbeiten" Content="Deinstallationsnacharbeiten" Height="30" Margin="5"/>
                     <!-- Hier können weitere Download-Buttons eingefügt werden -->
                     <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
                         <Button.Content>
@@ -265,6 +272,7 @@ $cloudButtons = @(
     @{ Name = "btnSmartLoginAdministration"; Url = "https://go.datev.de/smartlogin-administration" },
     @{ Name = "btnMyDATEVBestandsmanagement"; Url = "https://apps.datev.de/mydata/" },
     @{ Name = "btnWeitereCloudAnwendungen"; Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" }
+    @{ Name = "btnDATEVDownloadbereich"; Url = "https://www.datev.com/download/" }
 )
 
 foreach ($entry in $cloudButtons) {
@@ -277,6 +285,14 @@ foreach ($entry in $cloudButtons) {
 # Button-Referenz für Download ergänzen
 $ButtonNames += "btnDownloadSicherheitspaketCompact"
 $ButtonRefs["btnDownloadSicherheitspaketCompact"] = $window.FindName("btnDownloadSicherheitspaketCompact")
+$ButtonNames += "btnDownloadFernbetreuungOnline"
+$ButtonRefs["btnDownloadFernbetreuungOnline"] = $window.FindName("btnDownloadFernbetreuungOnline")
+$ButtonNames += "btnDownloadBelegtransfer"
+$ButtonRefs["btnDownloadBelegtransfer"] = $window.FindName("btnDownloadBelegtransfer")
+$ButtonNames += "btnDownloadServerprep"
+$ButtonRefs["btnDownloadServerprep"] = $window.FindName("btnDownloadServerprep")
+$ButtonNames += "btnDownloadDeinstallationsnacharbeiten"
+$ButtonRefs["btnDownloadDeinstallationsnacharbeiten"] = $window.FindName("btnDownloadDeinstallationsnacharbeiten")
 
 # Download-Logik für Sicherheitspaket compact
 function Download-DatevFile {
@@ -311,6 +327,18 @@ function Download-DatevFile {
 # Button-Registrierung für Download
 Register-ButtonAction -Button $ButtonRefs["btnDownloadSicherheitspaketCompact"] -Action {
     Download-DatevFile -Url "https://download.datev.de/download/sipacompact/sipacompact.exe" -FileName "sipacompact.exe"
+}
+Register-ButtonAction -Button $ButtonRefs["btnDownloadFernbetreuungOnline"] -Action {
+    Download-DatevFile -Url "https://download.datev.de/download/fbo-kp/datev_fernbetreuung_online.exe" -FileName "datev_fernbetreuung_online.exe"
+}
+Register-ButtonAction -Button $ButtonRefs["btnDownloadBelegtransfer"] -Action {
+    Download-DatevFile -Url "https://download.datev.de/download/bedi/belegtransfer546.exe" -FileName "belegtransfer546.exe"
+}
+Register-ButtonAction -Button $ButtonRefs["btnDownloadServerprep"] -Action {
+    Download-DatevFile -Url "https://download.datev.de/download/datevitfix/serverprep.exe" -FileName "serverprep.exe"
+}
+Register-ButtonAction -Button $ButtonRefs["btnDownloadDeinstallationsnacharbeiten"] -Action {
+    Download-DatevFile -Url "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" -FileName "deinstnacharbeitentool.exe"
 }
 
 # Button-Referenz für das Ordner-Icon hinzufügen
