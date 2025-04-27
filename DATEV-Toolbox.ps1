@@ -47,7 +47,7 @@ Add-Type -AssemblyName PresentationFramework
                 </StackPanel>
             </TabItem>
         </TabControl>
-        <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" />
+        <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" FontSize="11" />
     </Grid>
 </Window>
 "@
@@ -60,7 +60,7 @@ $versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/mai
 $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 
 function Write-Log($message) {
-    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $timestamp = Get-Date -Format 'HH:mm:ss'
     $txtLog.AppendText("[$timestamp] $message`n")
 }
 
