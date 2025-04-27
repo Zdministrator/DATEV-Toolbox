@@ -17,11 +17,23 @@ Add-Type -AssemblyName PresentationFramework
                     <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5"/>
                     <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5"/>
                     <Label Content="Tools" FontWeight="Bold" Margin="5"/>
+                    <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5"/>
+                    <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5"/>
+                    <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5"/>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Cloud Anwendungen">
                 <StackPanel Orientation="Vertical" Margin="10">
-                    <!-- Hier können Cloud-Buttons eingefügt werden -->
+                    <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5"/>
+                    <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5"/>
+                    <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5"/>
+                    <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5"/>
+                    <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5"/>
+                    <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5"/>
+                    <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5"/>
+                    <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5"/>
+                    <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5"/>
+                    <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5"/>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Downloads">
@@ -35,7 +47,7 @@ Add-Type -AssemblyName PresentationFramework
                 </StackPanel>
             </TabItem>
         </TabControl>
-        <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" />
+        <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" />
     </Grid>
 </Window>
 "@
@@ -63,9 +75,11 @@ function Test-ForUpdate {
                 # Sicherstellen, dass der Script-Pfad immer verfügbar ist
                 if ($PSCommandPath) {
                     $scriptDir = Split-Path -Parent $PSCommandPath
-                } elseif ($MyInvocation.MyCommand.Path) {
+                }
+                elseif ($MyInvocation.MyCommand.Path) {
                     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-                } else {
+                }
+                else {
                     throw 'Konnte den Skriptpfad nicht ermitteln.'
                 }
                 $newScriptPath = Join-Path -Path $scriptDir -ChildPath "DATEV-Toolbox.ps1.new"
@@ -73,13 +87,16 @@ function Test-ForUpdate {
                 Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
                 Write-Log "Neue Version wurde als $newScriptPath gespeichert. Bitte das laufende Skript schließen und die Datei manuell ersetzen."
                 [System.Windows.MessageBox]::Show("Neue Version wurde als $newScriptPath gespeichert.\nBitte das laufende Skript schließen und die Datei manuell ersetzen.", "Update heruntergeladen", 'OK', 'Information')
-            } else {
+            }
+            else {
                 Write-Log "Update abgebrochen durch Benutzer."
             }
-        } else {
+        }
+        else {
             Write-Log "Keine neue Version verfügbar."
         }
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Update-Check: $_"
     }
 }
@@ -92,7 +109,128 @@ $window = [Windows.Markup.XamlReader]::Load($reader)
 $window.Title = "DATEV Toolbox v$localVersion"
 
 # Controls referenzieren
-$txtLog = $window.FindName("txtLog")
+$controls = @("txtLog", "btnInstallationsmanager", "btnServicetool", "btnKonfigDBTools", "btnEOAufgabenplanung", "btnEODBconfig")
+foreach ($controlName in $controls) {
+    Set-Variable -Name $controlName -Value $window.FindName($controlName) -Scope Local
+}
+
+# Hilfsfunktion für Programm-Start
+function Register-ToolButton {
+    param (
+        [string]$ButtonVar,
+        [string]$ExePath,
+        [string]$ToolName
+    )
+    $btn = Get-Variable -Name $ButtonVar -ValueOnly
+    $exe = $ExePath
+    $toolName = $ToolName
+
+    if ([string]::IsNullOrWhiteSpace($exe) -or -not (Test-Path $exe)) {
+        $btn.IsEnabled = $false
+        $btn.ToolTip = "${toolName} nicht gefunden: $exe"
+        Write-Log "$toolName nicht gefunden und Button deaktiviert: $exe"
+        return
+    } else {
+        $btn.ToolTip = "$toolName starten"
+    }
+
+    $btn.Add_Click({
+        try {
+            Start-Process -FilePath $exe
+            Write-Log "$toolName gestartet: $exe"
+        }
+        catch {
+            Write-Log "Fehler beim Start von ${toolName}: $_"
+        }
+    })
+}
+
+# Zuordnungstabelle für Buttons und Programme
+$toolButtons = @(
+    @{ Button = "btnInstallationsmanager"; Exe = "$env:DATEVPP\PROGRAMM\INSTALL\DvInesInstMan.exe"; Name = "Installationsmanager" },
+    @{ Button = "btnServicetool";         Exe = "$env:DATEVPP\PROGRAMM\SRVTOOL\Srvtool.exe";         Name = "Servicetool" },
+    @{ Button = "btnKonfigDBTools";       Exe = "$env:DATEVPP\PROGRAMM\B0001502\cdbtool.exe";        Name = "KonfigDB-Tools" },
+    @{ Button = "btnEOAufgabenplanung";   Exe = "$env:DATEVPP\PROGRAMM\I0000085\EOControl.exe";      Name = "EO Aufgabenplanung" },
+    @{ Button = "btnEODBconfig";          Exe = "$env:DATEVPP\PROGRAMM\EODB\EODBConfig.exe";         Name = "EODBconfig" }
+)
+
+# Event-Handler für alle Tool-Buttons registrieren
+foreach ($entry in $toolButtons) {
+    Register-ToolButton -ButtonVar $entry.Button -ExePath $entry.Exe -ToolName $entry.Name
+}
+
+# Überarbeitung der Weblink-Buttons im "Cloud Anwendungen" Tab
+function Test-WebConnection {
+    param (
+        [Parameter(Mandatory)][string]$Url
+    )
+    try {
+        $request = [System.Net.WebRequest]::Create($Url)
+        $request.Method = "HEAD"
+        $request.Timeout = 5000
+        $response = $request.GetResponse()
+        $response.Close()
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
+function Start-WebLink {
+    param (
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][string]$Url
+    )
+
+    Write-Log "Öffne $Name..."
+
+    if (-not (Test-WebConnection -Url $Url)) {
+        Write-Log "Keine Verbindung zu $Url möglich – $Name wird nicht geöffnet."
+        return
+    }
+
+    try {
+        Start-Process $Url
+        Write-Log "$Name geöffnet."
+    }
+    catch {
+        Write-Log ("Fehler beim Öffnen von {0}: {1}" -f $Name, $_)
+    }
+}
+
+function Register-WebLinkHandler {
+    param (
+        [System.Windows.Controls.Button]$Button,
+        [string]$Name,
+        [string]$Url
+    )
+
+    $Button.Add_Click({
+            Start-WebLink -Name $Name -Url $Url
+        }.GetNewClosure())
+}
+
+# WebLinks Definition
+$cloudButtons = @(
+    @{ Name = "btnDATEVHilfeCenter";          Url = "https://apps.datev.de/help-center/" },
+    @{ Name = "btnMyDATEVPortal";             Url = "https://apps.datev.de/mydatev" },
+    @{ Name = "btnDATEVUnternehmenOnline";    Url = "https://duo.datev.de/" },
+    @{ Name = "btnLogistikauftragOnline";      Url = "https://apps.datev.de/lao" },
+    @{ Name = "btnLizenzverwaltungOnline";     Url = "https://apps.datev.de/lizenzverwaltung" },
+    @{ Name = "btnDATEVRechteraumOnline";      Url = "https://apps.datev.de/rechteraum" },
+    @{ Name = "btnDATEVRechteverwaltungOnline"; Url = "https://apps.datev.de/rvo-administration" },
+    @{ Name = "btnSmartLoginAdministration";   Url = "https://go.datev.de/smartlogin-administration" },
+    @{ Name = "btnMyDATEVBestandsmanagement";   Url = "https://apps.datev.de/mydata/" },
+    @{ Name = "btnWeitereCloudAnwendungen";    Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" }
+)
+
+foreach ($entry in $cloudButtons) {
+    $btn = $window.FindName($entry.Name)
+    if ($btn) {
+        Register-WebLinkHandler -Button $btn -Name $entry.Name -Url $entry.Url
+    }
+}
 
 # Nach dem Laden des Fensters auf Updates prüfen
 Test-ForUpdate
