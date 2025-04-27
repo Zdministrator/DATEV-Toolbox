@@ -24,13 +24,17 @@ Add-Type -AssemblyName PresentationFramework
             </TabItem>
             <TabItem Header="Cloud Anwendungen">
                 <StackPanel Orientation="Vertical" Margin="10">
+                    <Label Content="Hilfe und Support" FontWeight="Bold" Margin="5"/>
                     <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5"/>
+                    <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5"/>
+                    <Label Content="Cloud" FontWeight="Bold" Margin="5"/>                    
                     <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5"/>
                     <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5"/>
                     <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5"/>
                     <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5"/>
                     <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5"/>
                     <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5"/>
+                    <Label Content="Verwaltung und Technik" FontWeight="Bold" Margin="5"/>
                     <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5"/>
                     <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5"/>
                     <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5"/>
@@ -38,7 +42,17 @@ Add-Type -AssemblyName PresentationFramework
             </TabItem>
             <TabItem Header="Downloads">
                 <StackPanel Orientation="Vertical" Margin="10">
-                    <!-- Hier können Download-Buttons eingefügt werden -->
+                    <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
+                    <!-- Hier können weitere Download-Buttons eingefügt werden -->
+                    <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
+                        <Button.Content>
+                            <Viewbox Width="24" Height="24">
+                                <Canvas Width="24" Height="24">
+                                    <Path Data="M3,6 L21,6 L21,20 L3,20 Z M3,6 L12,2 L21,6" Stroke="Black" StrokeThickness="1.5" Fill="#FFC107"/>
+                                </Canvas>
+                            </Viewbox>
+                        </Button.Content>
+                    </Button>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Performance">
@@ -53,7 +67,7 @@ Add-Type -AssemblyName PresentationFramework
 "@
 
 # Versionsnummer des lokalen Scripts
-$localVersion = "1.0.1"
+$localVersion = "1.0.2"
 
 # URL zur Online-Versionsdatei
 $versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
@@ -62,6 +76,7 @@ $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main
 function Write-Log($message) {
     $timestamp = Get-Date -Format 'HH:mm:ss'
     $txtLog.AppendText("[$timestamp] $message`n")
+    $txtLog.ScrollToEnd() # Automatisch zum letzten Eintrag scrollen
 }
 
 function Test-ForUpdate {
@@ -135,6 +150,9 @@ $controls = @("txtLog", "btnInstallationsmanager", "btnServicetool", "btnKonfigD
 foreach ($controlName in $controls) {
     Set-Variable -Name $controlName -Value $window.FindName($controlName) -Scope Local
 }
+
+# Nach Initialisierung: Log direkt auf den letzten Eintrag scrollen
+$txtLog.ScrollToEnd()
 
 # Hilfsfunktion für Programm-Start
 function Register-ToolButton {
@@ -237,6 +255,7 @@ function Register-WebLinkHandler {
 # WebLinks Definition
 $cloudButtons = @(
     @{ Name = "btnDATEVHilfeCenter"; Url = "https://apps.datev.de/help-center/" },
+    @{ Name = "btnServicekontaktuebersicht"; Url = "https://apps.datev.de/servicekontakt-online/contacts" },
     @{ Name = "btnMyDATEVPortal"; Url = "https://apps.datev.de/mydatev" },
     @{ Name = "btnDATEVUnternehmenOnline"; Url = "https://duo.datev.de/" },
     @{ Name = "btnLogistikauftragOnline"; Url = "https://apps.datev.de/lao" },
@@ -255,8 +274,62 @@ foreach ($entry in $cloudButtons) {
     }
 }
 
+# Button-Referenz für Download ergänzen
+$ButtonNames += "btnDownloadSicherheitspaketCompact"
+$ButtonRefs["btnDownloadSicherheitspaketCompact"] = $window.FindName("btnDownloadSicherheitspaketCompact")
+
+# Download-Logik für Sicherheitspaket compact
+function Download-DatevFile {
+    param(
+        [string]$Url,
+        [string]$FileName
+    )
+    $downloads = [Environment]::GetFolderPath('UserProfile') + "\Downloads"
+    $targetDir = Join-Path $downloads "DATEV-Toolbox"
+    if (-not (Test-Path $targetDir)) {
+        New-Item -Path $targetDir -ItemType Directory | Out-Null
+    }
+    $targetFile = Join-Path $targetDir $FileName
+    if (Test-Path $targetFile) {
+        $result = [System.Windows.MessageBox]::Show("Die Datei '$FileName' existiert bereits. Überschreiben?", "Datei existiert", 'YesNo', 'Warning')
+        if ($result -ne 'Yes') {
+            Write-Log "Download abgebrochen: $FileName existiert bereits."
+            return
+        }
+    }
+    try {
+        Write-Log "Lade $FileName herunter ..."
+        Invoke-WebRequest -Uri $Url -OutFile $targetFile -UseBasicParsing
+        Write-Log "Download abgeschlossen: $targetFile"
+        [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
+    } catch {
+        Write-Log "Fehler beim Download: $_"
+        [System.Windows.MessageBox]::Show("Fehler beim Download: $_", "Fehler", 'OK', 'Error')
+    }
+}
+
+# Button-Registrierung für Download
+Register-ButtonAction -Button $ButtonRefs["btnDownloadSicherheitspaketCompact"] -Action {
+    Download-DatevFile -Url "https://download.datev.de/download/sipacompact/sipacompact.exe" -FileName "sipacompact.exe"
+}
+
+# Button-Referenz für das Ordner-Icon hinzufügen
+$ButtonNames += "btnOpenDownloadFolder"
+$ButtonRefs["btnOpenDownloadFolder"] = $window.FindName("btnOpenDownloadFolder")
+
+Register-ButtonAction -Button $ButtonRefs["btnOpenDownloadFolder"] -Action {
+    $downloads = [Environment]::GetFolderPath('UserProfile') + "\Downloads"
+    $targetDir = Join-Path $downloads "DATEV-Toolbox"
+    if (-not (Test-Path $targetDir)) {
+        New-Item -Path $targetDir -ItemType Directory | Out-Null
+    }
+    Write-Log "Öffne Download-Ordner..."
+    Start-Process explorer.exe $targetDir
+}
+
 # Nach dem Laden des Fensters auf Updates prüfen
 Test-ForUpdate
 
 # Fenster anzeigen
 $window.ShowDialog() | Out-Null
+$txtLog.ScrollToEnd() # Nach dem Anzeigen des Fensters erneut scrollen
