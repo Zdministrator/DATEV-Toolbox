@@ -1,4 +1,4 @@
-Add-Type -AssemblyName PresentationFramework
+﻿Add-Type -AssemblyName PresentationFramework
 
 # XAML-Definition für das Fenster
 [xml]$xaml = @"
@@ -73,19 +73,52 @@ Add-Type -AssemblyName PresentationFramework
 </Window>
 "@
 
+# XAML laden
+$reader = (New-Object System.Xml.XmlNodeReader $xaml)
+$window = [Windows.Markup.XamlReader]::Load($reader)
+
 # Versionsnummer des lokalen Scripts
 $localVersion = "1.0.2"
+
+# Fenstertitel um Versionsnummer ergänzen
+$window.Title = "DATEV Toolbox v$localVersion"
 
 # URL zur Online-Versionsdatei
 $versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
 $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 
-function Write-Log($message) {
-    $timestamp = Get-Date -Format 'HH:mm:ss'
-    $txtLog.AppendText("[$timestamp] $message`n")
-    $txtLog.ScrollToEnd() # Automatisch zum letzten Eintrag scrollen
+# Zentrale Funktion zur Referenzierung aller Controls
+function Initialize-Controls {
+    $global:Controls = @{
+        "txtLog" = $window.FindName("txtLog")
+    }
+    $controlNames = @(
+        "btnArbeitsplatz", "btnInstallationsmanager", "btnServicetool", "btnKonfigDBTools", "btnEOAufgabenplanung", "btnEODBconfig",
+        "btnDATEVHilfeCenter", "btnServicekontaktuebersicht", "btnMyDATEVPortal", "btnDATEVUnternehmenOnline", "btnLogistikauftragOnline",
+        "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
+        "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDATEVDownloadbereich", "btnDownloadSicherheitspaketCompact",
+        "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
+        "btnOpenDownloadFolder"
+    )
+    foreach ($name in $controlNames) {
+        $global:Controls[$name] = $window.FindName($name)
+    }
 }
 
+# Nach dem Laden des Fensters Controls initialisieren
+Initialize-Controls
+
+function Write-Log($message) {
+    $timestamp = Get-Date -Format 'HH:mm:ss'
+    try {
+        if ($null -ne $global:Controls["txtLog"]) {
+            $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
+            $global:Controls["txtLog"].ScrollToEnd()
+        }
+    } catch {
+        # Fehler beim Loggen ignorieren, damit das Script weiterläuft
+    }
+}
 function Test-ForUpdate {
     try {
         Write-Log "Prüfe auf Updates..."
@@ -125,8 +158,12 @@ Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File ""$scriptP
 Remove-Item -Path '$updateScriptPath' -Force
 "@
                 $updateScript = $updateScript -replace '\$PID', $PID
-                Set-Content -Path $updateScriptPath -Value $updateScript -Encoding UTF8
-                Write-Log "Update-Script wurde erstellt: $updateScriptPath"
+                try {
+                    Set-Content -Path $updateScriptPath -Value $updateScript -Encoding UTF8
+                    Write-Log "Update-Script wurde erstellt: $updateScriptPath"
+                } catch {
+                    Write-Log "Fehler beim Erstellen des Update-Scripts: $_"
+                }
                 [System.Windows.MessageBox]::Show("Das Programm wird für das Update beendet und automatisch neu gestartet.", "Update wird durchgeführt", 'OK', 'Information')
                 # Update-Script starten und beenden
                 Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$updateScriptPath`"" -WindowStyle Hidden
@@ -145,22 +182,6 @@ Remove-Item -Path '$updateScriptPath' -Force
     }
 }
 
-# XAML laden
-$reader = (New-Object System.Xml.XmlNodeReader $xaml)
-$window = [Windows.Markup.XamlReader]::Load($reader)
-
-# Fenstertitel um Versionsnummer ergänzen
-$window.Title = "DATEV Toolbox v$localVersion"
-
-# Controls referenzieren
-$controls = @("txtLog", "btnInstallationsmanager", "btnServicetool", "btnKonfigDBTools", "btnEOAufgabenplanung", "btnEODBconfig")
-foreach ($controlName in $controls) {
-    Set-Variable -Name $controlName -Value $window.FindName($controlName) -Scope Local
-}
-
-# Nach Initialisierung: Log direkt auf den letzten Eintrag scrollen
-$txtLog.ScrollToEnd()
-
 # Hilfsfunktion für Programm-Start
 function Register-ToolButton {
     param (
@@ -168,7 +189,7 @@ function Register-ToolButton {
         [string]$ExePath,
         [string]$ToolName
     )
-    $btn = Get-Variable -Name $ButtonVar -ValueOnly
+    $btn = $Controls[$ButtonVar]
     $exe = $ExePath
     $toolName = $ToolName
 
@@ -190,7 +211,7 @@ function Register-ToolButton {
             catch {
                 Write-Log "Fehler beim Start von ${toolName}: $_"
             }
-        })
+        }.GetNewClosure())
 }
 
 # Zuordnungstabelle für Buttons und Programme
@@ -276,7 +297,7 @@ $cloudButtons = @(
 )
 
 foreach ($entry in $cloudButtons) {
-    $btn = $window.FindName($entry.Name)
+    $btn = $Controls[$entry.Name]
     if ($btn) {
         Register-WebLinkHandler -Button $btn -Name $entry.Name -Url $entry.Url
     }
@@ -287,15 +308,15 @@ $ButtonRefs = @{}
 
 # Button-Referenz für Download ergänzen
 $ButtonNames += "btnDownloadSicherheitspaketCompact"
-$ButtonRefs["btnDownloadSicherheitspaketCompact"] = $window.FindName("btnDownloadSicherheitspaketCompact")
+$ButtonRefs["btnDownloadSicherheitspaketCompact"] = $Controls["btnDownloadSicherheitspaketCompact"]
 $ButtonNames += "btnDownloadFernbetreuungOnline"
-$ButtonRefs["btnDownloadFernbetreuungOnline"] = $window.FindName("btnDownloadFernbetreuungOnline")
+$ButtonRefs["btnDownloadFernbetreuungOnline"] = $Controls["btnDownloadFernbetreuungOnline"]
 $ButtonNames += "btnDownloadBelegtransfer"
-$ButtonRefs["btnDownloadBelegtransfer"] = $window.FindName("btnDownloadBelegtransfer")
+$ButtonRefs["btnDownloadBelegtransfer"] = $Controls["btnDownloadBelegtransfer"]
 $ButtonNames += "btnDownloadServerprep"
-$ButtonRefs["btnDownloadServerprep"] = $window.FindName("btnDownloadServerprep")
+$ButtonRefs["btnDownloadServerprep"] = $Controls["btnDownloadServerprep"]
 $ButtonNames += "btnDownloadDeinstallationsnacharbeiten"
-$ButtonRefs["btnDownloadDeinstallationsnacharbeiten"] = $window.FindName("btnDownloadDeinstallationsnacharbeiten")
+$ButtonRefs["btnDownloadDeinstallationsnacharbeiten"] = $Controls["btnDownloadDeinstallationsnacharbeiten"]
 
 # Download-Logik für Sicherheitspaket compact
 function Get-DatevFile {
@@ -321,7 +342,8 @@ function Get-DatevFile {
         Invoke-WebRequest -Uri $Url -OutFile $targetFile -UseBasicParsing
         Write-Log "Download abgeschlossen: $targetFile"
         [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Download: $_"
         [System.Windows.MessageBox]::Show("Fehler beim Download: $_", "Fehler", 'OK', 'Error')
     }
@@ -356,7 +378,7 @@ Register-ButtonAction -Button $ButtonRefs["btnDownloadDeinstallationsnacharbeite
 
 # Button-Referenz für das Ordner-Icon hinzufügen
 $ButtonNames += "btnOpenDownloadFolder"
-$ButtonRefs["btnOpenDownloadFolder"] = $window.FindName("btnOpenDownloadFolder")
+$ButtonRefs["btnOpenDownloadFolder"] = $Controls["btnOpenDownloadFolder"]
 
 Register-ButtonAction -Button $ButtonRefs["btnOpenDownloadFolder"] -Action {
     $downloads = [Environment]::GetFolderPath('UserProfile') + "\Downloads"
@@ -373,4 +395,4 @@ Test-ForUpdate
 
 # Fenster anzeigen
 $window.ShowDialog() | Out-Null
-$txtLog.ScrollToEnd() # Nach dem Anzeigen des Fensters erneut scrollen
+$Controls["txtLog"].ScrollToEnd() # Nach dem Anzeigen des Fensters erneut scrollen
