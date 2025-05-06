@@ -272,7 +272,7 @@ $cloudButtons = @(
     @{ Name = "btnSmartLoginAdministration"; Url = "https://go.datev.de/smartlogin-administration" },
     @{ Name = "btnMyDATEVBestandsmanagement"; Url = "https://apps.datev.de/mydata/" },
     @{ Name = "btnWeitereCloudAnwendungen"; Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" }
-    @{ Name = "btnDATEVDownloadbereich"; Url = "https://www.datev.com/download/" }
+    @{ Name = "btnDATEVDownloadbereich"; Url = "https://www.datev.de/download/" }
 )
 
 foreach ($entry in $cloudButtons) {
@@ -281,6 +281,9 @@ foreach ($entry in $cloudButtons) {
         Register-WebLinkHandler -Button $btn -Name $entry.Name -Url $entry.Url
     }
 }
+
+# Button-Referenz-Hashtable initialisieren
+$ButtonRefs = @{} 
 
 # Button-Referenz für Download ergänzen
 $ButtonNames += "btnDownloadSicherheitspaketCompact"
@@ -295,7 +298,7 @@ $ButtonNames += "btnDownloadDeinstallationsnacharbeiten"
 $ButtonRefs["btnDownloadDeinstallationsnacharbeiten"] = $window.FindName("btnDownloadDeinstallationsnacharbeiten")
 
 # Download-Logik für Sicherheitspaket compact
-function Download-DatevFile {
+function Get-DatevFile {
     param(
         [string]$Url,
         [string]$FileName
@@ -324,21 +327,31 @@ function Download-DatevFile {
     }
 }
 
+function Register-ButtonAction {
+    param(
+        [Parameter(Mandatory)][System.Windows.Controls.Button]$Button,
+        [Parameter(Mandatory)][scriptblock]$Action
+    )
+    if ($Button) {
+        $Button.Add_Click($Action)
+    }
+}
+
 # Button-Registrierung für Download
 Register-ButtonAction -Button $ButtonRefs["btnDownloadSicherheitspaketCompact"] -Action {
-    Download-DatevFile -Url "https://download.datev.de/download/sipacompact/sipacompact.exe" -FileName "sipacompact.exe"
+    Get-DatevFile -Url "https://download.datev.de/download/sipacompact/sipacompact.exe" -FileName "sipacompact.exe"
 }
 Register-ButtonAction -Button $ButtonRefs["btnDownloadFernbetreuungOnline"] -Action {
-    Download-DatevFile -Url "https://download.datev.de/download/fbo-kp/datev_fernbetreuung_online.exe" -FileName "datev_fernbetreuung_online.exe"
+    Get-DatevFile -Url "https://download.datev.de/download/fbo-kp/datev_fernbetreuung_online.exe" -FileName "datev_fernbetreuung_online.exe"
 }
 Register-ButtonAction -Button $ButtonRefs["btnDownloadBelegtransfer"] -Action {
-    Download-DatevFile -Url "https://download.datev.de/download/bedi/belegtransfer546.exe" -FileName "belegtransfer546.exe"
+    Get-DatevFile -Url "https://download.datev.de/download/bedi/belegtransfer546.exe" -FileName "belegtransfer546.exe"
 }
 Register-ButtonAction -Button $ButtonRefs["btnDownloadServerprep"] -Action {
-    Download-DatevFile -Url "https://download.datev.de/download/datevitfix/serverprep.exe" -FileName "serverprep.exe"
+    Get-DatevFile -Url "https://download.datev.de/download/datevitfix/serverprep.exe" -FileName "serverprep.exe"
 }
 Register-ButtonAction -Button $ButtonRefs["btnDownloadDeinstallationsnacharbeiten"] -Action {
-    Download-DatevFile -Url "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" -FileName "deinstnacharbeitentool.exe"
+    Get-DatevFile -Url "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" -FileName "deinstnacharbeitentool.exe"
 }
 
 # Button-Referenz für das Ordner-Icon hinzufügen
