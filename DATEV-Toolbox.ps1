@@ -59,6 +59,8 @@
                         <StackPanel Orientation="Vertical" Margin="10">
                             <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
+                            <Button Name="btnDatevSmartDocs" Content="DATEV Smart Docs" Height="30" Margin="5"/>
+                            <Button Name="btnDatentraegerDownloadPortal" Content="Datenträger Download Portal" Height="30" Margin="5"/>
                             <Label Content="Direkt Downloads" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
                             <Button Name="btnDownloadFernbetreuungOnline" Content="Fernbetreuung Online" Height="30" Margin="5"/>
@@ -81,6 +83,8 @@
                 <TabItem Header="Performance">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
+                            <Button Name="btnNgenAll40" Content="Native Images erzwingen" Height="30" Margin="5" />
+                            <Button Name="btnLeistungsindex" Content="Leistungsindex" Height="30" Margin="5" />
                             <!-- Hier können Performance-Buttons eingefügt werden -->
                         </StackPanel>
                     </ScrollViewer>
@@ -113,9 +117,9 @@ function Initialize-Controls {
         "btnArbeitsplatz", "btnInstallationsmanager", "btnServicetool", "btnKonfigDBTools", "btnEOAufgabenplanung", "btnEODBconfig",
         "btnDATEVHilfeCenter", "btnServicekontaktuebersicht", "btnMyDATEVPortal", "btnDATEVUnternehmenOnline", "btnLogistikauftragOnline",
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
-        "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDownloadSicherheitspaketCompact",
-        "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
-        "btnOpenDownloadFolder", "menuCheckUpdate"
+        "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
+        "btnDownloadSicherheitspaketCompact", "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
+        "btnOpenDownloadFolder", "menuCheckUpdate", "btnNgenAll40", "btnLeistungsindex"
     )
     foreach ($name in $controlNames) {
         $global:Controls[$name] = $window.FindName($name)
@@ -337,7 +341,8 @@ $toolButtons = @(
     @{ Button = "btnKonfigDBTools"; Exe = "$env:DATEVPP\PROGRAMM\B0001502\cdbtool.exe"; Name = "KonfigDB-Tools" },
     @{ Button = "btnEOAufgabenplanung"; Exe = "$env:DATEVPP\PROGRAMM\I0000085\EOControl.exe"; Name = "EO Aufgabenplanung" },
     @{ Button = "btnEODBconfig"; Exe = "$env:DATEVPP\PROGRAMM\EODB\EODBConfig.exe"; Name = "EODBconfig" },
-    @{ Button = "btnArbeitsplatz"; Exe = "$env:DATEVPP\PROGRAMM\K0005000\Arbeitsplatz.exe"; Name = "DATEV-Arbeitsplatz" }
+    @{ Button = "btnArbeitsplatz"; Exe = "$env:DATEVPP\PROGRAMM\K0005000\Arbeitsplatz.exe"; Name = "DATEV-Arbeitsplatz" },
+    @{ Button = "btnNgenAll40"; Exe = "$env:DATEVPP\Programm\B0001508\ngenall40.cmd"; Name = "NGENALL 4.0" }
 )
 
 # Registriert Event-Handler für alle Tool-Buttons
@@ -395,7 +400,9 @@ $cloudButtons = @(
     @{ Name = "btnSmartLoginAdministration"; Url = "https://go.datev.de/smartlogin-administration" },
     @{ Name = "btnMyDATEVBestandsmanagement"; Url = "https://apps.datev.de/mydata/" },
     @{ Name = "btnWeitereCloudAnwendungen"; Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" },
-    @{ Name = "btnDatevDownloadbereich"; Url = "https://www.datev.de/download/" }
+    @{ Name = "btnDatevDownloadbereich"; Url = "https://www.datev.de/download/" },
+    @{ Name = "btnDatevSmartDocs"; Url = "https://www.datev.de/web/de/service-und-support/software-bereitstellung/download-bereich/it-loesungen-und-security/datev-smartdocs-skripte-zur-analyse-oder-reparatur/" },
+    @{ Name = "btnDatentraegerDownloadPortal"; Url = "https://www.datev.de/web/de/service-und-support/software-bereitstellung/datentraeger-portal/" }
 )
 
 # Registriert Event-Handler für alle Cloud/Weblink-Buttons
@@ -406,18 +413,24 @@ foreach ($entry in $cloudButtons) {
     }
 }
 
-# Lädt eine Datei von einer angegebenen URL in den Download-Ordner
-function Get-DatevFile {
-    param(
-        [string]$Url,
-        [string]$FileName
-    )
+# Gibt den Download-Ordner für die Toolbox zurück
+function Get-DownloadFolder {
     $downloads = [Environment]::GetFolderPath('UserProfile')
     $targetDir = Join-Path $downloads "Downloads"
     $targetDir = Join-Path $targetDir "DATEV-Toolbox"
     if (-not (Test-Path $targetDir)) {
         New-Item -Path $targetDir -ItemType Directory | Out-Null
     }
+    return $targetDir
+}
+
+# Lädt eine Datei von einer angegebenen URL in den Download-Ordner
+function Get-DatevFile {
+    param(
+        [string]$Url,
+        [string]$FileName
+    )
+    $targetDir = Get-DownloadFolder
     $targetFile = Join-Path $targetDir $FileName
     if (Test-Path $targetFile) {
         $result = [System.Windows.MessageBox]::Show("Die Datei '$FileName' existiert bereits. Überschreiben?", "Datei existiert", 'YesNo', 'Warning')
@@ -477,14 +490,18 @@ Register-ButtonAction -Button $Controls["btnDownloadDeinstallationsnacharbeiten"
 
 # Registriert Event-Handler für das Öffnen des Download-Ordners
 Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
-    $downloads = [Environment]::GetFolderPath('UserProfile')
-    $targetDir = Join-Path $downloads "Downloads"
-    $targetDir = Join-Path $targetDir "DATEV-Toolbox"
-    if (-not (Test-Path $targetDir)) {
-        New-Item -Path $targetDir -ItemType Directory | Out-Null
-    }
+    $targetDir = Get-DownloadFolder
     Write-Log "Öffne Download-Ordner..."
     Start-Process explorer.exe $targetDir
+}
+
+# Registriert Event-Handler für den Leistungsindex-Button
+if ($global:Controls["btnLeistungsindex"]) {
+    $global:Controls["btnLeistungsindex"].Add_Click({
+        $exe = "$env:DATEVPP\PROGRAMM\RWAPPLIC\irw.exe"
+        Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011 -c" -Wait
+        Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011" -Wait
+    })
 }
 
 # Tooltips für alle Buttons ergänzen
