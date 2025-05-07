@@ -9,14 +9,10 @@
         <!-- Ressourcen können hier definiert werden -->
     </Window.Resources>
     <DockPanel>
-        <Menu DockPanel.Dock="Top" HorizontalAlignment="Right">
-            <MenuItem Header="Hilfe">
-                <MenuItem Name="menuCheckUpdate" Header="Auf Updates prüfen" />
-            </MenuItem>
-        </Menu>
         <Grid Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" /> <!-- Menüleiste (entfernt) -->
                 <RowDefinition Height="100" /> <!-- Log-Ausgabe -->
             </Grid.RowDefinitions>
             <TabControl Grid.Row="0" Margin="0,0,0,0" VerticalAlignment="Stretch">
@@ -31,6 +27,9 @@
                             <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5"/>
                             <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5"/>
                             <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5"/>
+                            <Label Content="Performance" FontWeight="Bold" Margin="5"/>
+                            <Button Name="btnNgenAll40" Content="Native Images erzwingen" Height="30" Margin="5" />
+                            <Button Name="btnLeistungsindex" Content="Leistungsindex" Height="30" Margin="5" />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -80,17 +79,16 @@
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
-                <TabItem Header="Performance">
+                <TabItem Header="Einstellungen">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
-                            <Button Name="btnNgenAll40" Content="Native Images erzwingen" Height="30" Margin="5" />
-                            <Button Name="btnLeistungsindex" Content="Leistungsindex" Height="30" Margin="5" />
-                            <!-- Hier können Performance-Buttons eingefügt werden -->
+                            <TextBlock Text='Einstellungen (Platzhalter)' FontWeight='Bold' FontSize='14' Margin='0,0,0,10'/>
+                            <TextBlock Text='Hier können Einstellungen ergänzt werden.' />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
             </TabControl>
-            <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" FontSize="11" />
+            <TextBox Name="txtLog" Grid.Row="2" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" FontSize="11" />
         </Grid>
     </DockPanel>
 </Window>
@@ -119,7 +117,7 @@ function Initialize-Controls {
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
         "btnDownloadSicherheitspaketCompact", "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
-        "btnOpenDownloadFolder", "menuCheckUpdate", "btnNgenAll40", "btnLeistungsindex"
+        "btnOpenDownloadFolder", "menuCheckUpdate", "btnNgenAll40", "btnLeistungsindex", "menuSettings"
     )
     foreach ($name in $controlNames) {
         $global:Controls[$name] = $window.FindName($name)
