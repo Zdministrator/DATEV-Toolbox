@@ -12,61 +12,69 @@
         </Grid.RowDefinitions>
         <TabControl Grid.Row="0" Margin="0,0,0,0" VerticalAlignment="Stretch">
             <TabItem Header="DATEV Tools">
-                <StackPanel Orientation="Vertical" Margin="10">
-                    <Label Content="Programme" FontWeight="Bold" Margin="5"/>
-                    <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5"/>
-                    <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5"/>
-                    <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5"/>
-                    <Label Content="Tools" FontWeight="Bold" Margin="5"/>
-                    <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5"/>
-                    <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5"/>
-                    <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5"/>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Orientation="Vertical" Margin="10">
+                        <Label Content="Programme" FontWeight="Bold" Margin="5"/>
+                        <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5"/>
+                        <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5"/>
+                        <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5"/>
+                        <Label Content="Tools" FontWeight="Bold" Margin="5"/>
+                        <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5"/>
+                        <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5"/>
+                        <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5"/>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
             <TabItem Header="Cloud Anwendungen">
-                <StackPanel Orientation="Vertical" Margin="10">
-                    <Label Content="Hilfe und Support" FontWeight="Bold" Margin="5"/>
-                    <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5"/>
-                    <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5"/>
-                    <Label Content="Cloud" FontWeight="Bold" Margin="5"/>                    
-                    <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5"/>
-                    <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5"/>
-                    <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5"/>
-                    <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5"/>
-                    <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5"/>
-                    <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5"/>
-                    <Label Content="Verwaltung und Technik" FontWeight="Bold" Margin="5"/>
-                    <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5"/>
-                    <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5"/>
-                    <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5"/>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Orientation="Vertical" Margin="10">
+                        <Label Content="Hilfe und Support" FontWeight="Bold" Margin="5"/>
+                        <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5"/>
+                        <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5"/>
+                        <Label Content="Cloud" FontWeight="Bold" Margin="5"/>                    
+                        <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5"/>
+                        <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5"/>
+                        <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5"/>
+                        <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5"/>
+                        <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5"/>
+                        <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5"/>
+                        <Label Content="Verwaltung und Technik" FontWeight="Bold" Margin="5"/>
+                        <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5"/>
+                        <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5"/>
+                        <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5"/>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
             <TabItem Header="Downloads">
-                <StackPanel Orientation="Vertical" Margin="10">
-                    <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
-                    <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
-                    <Label Content="Direkt Downloads" FontWeight="Bold" Margin="5"/>
-                    <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
-                    <Button Name="btnDownloadFernbetreuungOnline" Content="Fernbetreuung Online" Height="30" Margin="5"/>
-                    <Button Name="btnDownloadBelegtransfer" Content="Belegtransfer V. 5.46" Height="30" Margin="5"/>
-                    <Button Name="btnDownloadServerprep" Content="Serverprep" Height="30" Margin="5"/>
-                    <Button Name="btnDownloadDeinstallationsnacharbeiten" Content="Deinstallationsnacharbeiten" Height="30" Margin="5"/>
-                    <!-- Hier können weitere Download-Buttons eingefügt werden -->
-                    <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
-                        <Button.Content>
-                            <Viewbox Width="24" Height="24">
-                                <Canvas Width="24" Height="24">
-                                    <Path Data="M3,6 L21,6 L21,20 L3,20 Z M3,6 L12,2 L21,6" Stroke="Black" StrokeThickness="1.5" Fill="#FFC107"/>
-                                </Canvas>
-                            </Viewbox>
-                        </Button.Content>
-                    </Button>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Orientation="Vertical" Margin="10">
+                        <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
+                        <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
+                        <Label Content="Direkt Downloads" FontWeight="Bold" Margin="5"/>
+                        <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
+                        <Button Name="btnDownloadFernbetreuungOnline" Content="Fernbetreuung Online" Height="30" Margin="5"/>
+                        <Button Name="btnDownloadBelegtransfer" Content="Belegtransfer V. 5.46" Height="30" Margin="5"/>
+                        <Button Name="btnDownloadServerprep" Content="Serverprep" Height="30" Margin="5"/>
+                        <Button Name="btnDownloadDeinstallationsnacharbeiten" Content="Deinstallationsnacharbeiten" Height="30" Margin="5"/>
+                        <!-- Hier können weitere Download-Buttons eingefügt werden -->
+                        <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
+                            <Button.Content>
+                                <Viewbox Width="24" Height="24">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Data="M3,6 L21,6 L21,20 L3,20 Z M3,6 L12,2 L21,6" Stroke="Black" StrokeThickness="1.5" Fill="#FFC107"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Button.Content>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
             <TabItem Header="Performance">
-                <StackPanel Orientation="Vertical" Margin="10">
-                    <!-- Hier können Performance-Buttons eingefügt werden -->
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Orientation="Vertical" Margin="10">
+                        <!-- Hier können Performance-Buttons eingefügt werden -->
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
         <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" FontSize="11" />
