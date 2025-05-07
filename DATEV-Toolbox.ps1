@@ -5,80 +5,90 @@
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         Title="DATEV Toolbox" MinHeight="400" Width="400" ResizeMode="CanMinimize">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="100" /> <!-- Log-Ausgabe -->
-        </Grid.RowDefinitions>
-        <TabControl Grid.Row="0" Margin="0,0,0,0" VerticalAlignment="Stretch">
-            <TabItem Header="DATEV Tools">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Orientation="Vertical" Margin="10">
-                        <Label Content="Programme" FontWeight="Bold" Margin="5"/>
-                        <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5"/>
-                        <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5"/>
-                        <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5"/>
-                        <Label Content="Tools" FontWeight="Bold" Margin="5"/>
-                        <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5"/>
-                        <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5"/>
-                        <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Cloud Anwendungen">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Orientation="Vertical" Margin="10">
-                        <Label Content="Hilfe und Support" FontWeight="Bold" Margin="5"/>
-                        <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5"/>
-                        <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5"/>
-                        <Label Content="Cloud" FontWeight="Bold" Margin="5"/>                    
-                        <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5"/>
-                        <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5"/>
-                        <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5"/>
-                        <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5"/>
-                        <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5"/>
-                        <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5"/>
-                        <Label Content="Verwaltung und Technik" FontWeight="Bold" Margin="5"/>
-                        <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5"/>
-                        <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5"/>
-                        <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Downloads">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Orientation="Vertical" Margin="10">
-                        <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
-                        <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
-                        <Label Content="Direkt Downloads" FontWeight="Bold" Margin="5"/>
-                        <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
-                        <Button Name="btnDownloadFernbetreuungOnline" Content="Fernbetreuung Online" Height="30" Margin="5"/>
-                        <Button Name="btnDownloadBelegtransfer" Content="Belegtransfer V. 5.46" Height="30" Margin="5"/>
-                        <Button Name="btnDownloadServerprep" Content="Serverprep" Height="30" Margin="5"/>
-                        <Button Name="btnDownloadDeinstallationsnacharbeiten" Content="Deinstallationsnacharbeiten" Height="30" Margin="5"/>
-                        <!-- Hier können weitere Download-Buttons eingefügt werden -->
-                        <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
-                            <Button.Content>
-                                <Viewbox Width="24" Height="24">
-                                    <Canvas Width="24" Height="24">
-                                        <Path Data="M3,6 L21,6 L21,20 L3,20 Z M3,6 L12,2 L21,6" Stroke="Black" StrokeThickness="1.5" Fill="#FFC107"/>
-                                    </Canvas>
-                                </Viewbox>
-                            </Button.Content>
-                        </Button>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Performance">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Orientation="Vertical" Margin="10">
-                        <!-- Hier können Performance-Buttons eingefügt werden -->
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-        </TabControl>
-        <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" FontSize="11" />
-    </Grid>
+    <Window.Resources>
+        <!-- Ressourcen können hier definiert werden -->
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" HorizontalAlignment="Right">
+            <MenuItem Header="Hilfe">
+                <MenuItem Name="menuCheckUpdate" Header="Auf Updates prüfen" />
+            </MenuItem>
+        </Menu>
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="100" /> <!-- Log-Ausgabe -->
+            </Grid.RowDefinitions>
+            <TabControl Grid.Row="0" Margin="0,0,0,0" VerticalAlignment="Stretch">
+                <TabItem Header="DATEV Tools">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" Margin="10">
+                            <Label Content="Programme" FontWeight="Bold" Margin="5"/>
+                            <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5"/>
+                            <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5"/>
+                            <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5"/>
+                            <Label Content="Tools" FontWeight="Bold" Margin="5"/>
+                            <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5"/>
+                            <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5"/>
+                            <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="Cloud Anwendungen">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" Margin="10">
+                            <Label Content="Hilfe und Support" FontWeight="Bold" Margin="5"/>
+                            <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5"/>
+                            <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5"/>
+                            <Label Content="Cloud" FontWeight="Bold" Margin="5"/>                    
+                            <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5"/>
+                            <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5"/>
+                            <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5"/>
+                            <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5"/>
+                            <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5"/>
+                            <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5"/>
+                            <Label Content="Verwaltung und Technik" FontWeight="Bold" Margin="5"/>
+                            <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5"/>
+                            <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5"/>
+                            <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="Downloads">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" Margin="10">
+                            <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
+                            <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
+                            <Label Content="Direkt Downloads" FontWeight="Bold" Margin="5"/>
+                            <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
+                            <Button Name="btnDownloadFernbetreuungOnline" Content="Fernbetreuung Online" Height="30" Margin="5"/>
+                            <Button Name="btnDownloadBelegtransfer" Content="Belegtransfer V. 5.46" Height="30" Margin="5"/>
+                            <Button Name="btnDownloadServerprep" Content="Serverprep" Height="30" Margin="5"/>
+                            <Button Name="btnDownloadDeinstallationsnacharbeiten" Content="Deinstallationsnacharbeiten" Height="30" Margin="5"/>
+                            <!-- Hier können weitere Download-Buttons eingefügt werden -->
+                            <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
+                                <Button.Content>
+                                    <Viewbox Width="24" Height="24">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Data="M3,6 L21,6 L21,20 L3,20 Z M3,6 L12,2 L21,6" Stroke="Black" StrokeThickness="1.5" Fill="#FFC107"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                </Button.Content>
+                            </Button>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="Performance">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" Margin="10">
+                            <!-- Hier können Performance-Buttons eingefügt werden -->
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+            <TextBox Name="txtLog" Grid.Row="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" FontSize="11" />
+        </Grid>
+    </DockPanel>
 </Window>
 "@
 
@@ -105,7 +115,7 @@ function Initialize-Controls {
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDATEVDownloadbereich", "btnDownloadSicherheitspaketCompact",
         "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
-        "btnOpenDownloadFolder"
+        "btnOpenDownloadFolder", "menuCheckUpdate"
     )
     foreach ($name in $controlNames) {
         $global:Controls[$name] = $window.FindName($name)
@@ -114,6 +124,13 @@ function Initialize-Controls {
 
 # Nach dem Laden des Fensters Controls initialisieren
 Initialize-Controls
+
+# Registriert Event-Handler für den Menüpunkt "Auf Updates prüfen"
+if ($global:Controls["menuCheckUpdate"]) {
+    $global:Controls["menuCheckUpdate"].Add_Click({
+        Test-ForUpdate
+    })
+}
 
 # Schreibt eine Logzeile in das Ausgabefeld (txtLog)
 function Write-Log($message) {
@@ -131,9 +148,31 @@ function Write-Log($message) {
 
 # Prüft beim Start, ob eine neue Version des Scripts online verfügbar ist und bietet ggf. ein Update an
 function Test-ForUpdate {
+    # Prüfe Internetverbindung vor dem Update-Check
+    $testConnection = $false
+    try {
+        $ping = Test-Connection -ComputerName "www.google.com" -Count 1 -Quiet -ErrorAction Stop
+        if ($ping) { $testConnection = $true }
+    } catch {
+        $testConnection = $false
+    }
+    if (-not $testConnection) {
+        Write-Log "Keine Internetverbindung. Update-Check abgebrochen."
+        [System.Windows.MessageBox]::Show("Es konnte keine Internetverbindung festgestellt werden. Der Update-Check wird abgebrochen.", "Update-Fehler", 'OK', 'Error')
+        return
+    }
     try {
         Write-Log "Prüfe auf Updates..."
-        $remoteVersion = Invoke-RestMethod -Uri $versionUrl -UseBasicParsing # -UseBasicParsing für PowerShell 5.1 nötig
+        # Timeout für Webanfrage setzen
+        $webRequest = [System.Net.WebRequest]::Create($versionUrl)
+        $webRequest.Timeout = 5000 # 5 Sekunden Timeout
+        $response = $webRequest.GetResponse()
+        $stream = $response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($stream)
+        $remoteVersion = $reader.ReadToEnd().Trim()
+        $reader.Close()
+        $response.Close()
+        Write-Log "Lokale Version: $localVersion, Online-Version: $remoteVersion"
         if ($remoteVersion -and ($remoteVersion -ne $localVersion)) {
             Write-Log "Neue Version gefunden: $remoteVersion (aktuell: $localVersion)"
             $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen?", "Update verfügbar", 'YesNo', 'Information')
@@ -150,17 +189,32 @@ function Test-ForUpdate {
                 else {
                     throw 'Konnte den Skriptpfad nicht ermitteln.'
                 }
+                # Prüfe Schreibrechte im Scriptverzeichnis
+                $testFile = Join-Path $scriptDir "_write_test.tmp"
+                try {
+                    Set-Content -Path $testFile -Value "test" -ErrorAction Stop
+                    Remove-Item -Path $testFile -Force -ErrorAction SilentlyContinue
+                } catch {
+                    Write-Log "Keine Schreibrechte im Scriptverzeichnis: $scriptDir"
+                    [System.Windows.MessageBox]::Show("Das Update kann nicht durchgeführt werden, da keine Schreibrechte im Scriptverzeichnis ($scriptDir) bestehen.", "Update-Fehler", 'OK', 'Error')
+                    return
+                }
                 $newScriptPath = Join-Path $scriptDir "DATEV-Toolbox.ps1.new"
                 $updateScriptPath = Join-Path $scriptDir "Update-DATEV-Toolbox.ps1"
                 Write-Log "Lade neue Version herunter..."
                 Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
                 Write-Log "Neue Version wurde als $newScriptPath gespeichert. Update-Vorgang wird vorbereitet."
 
-                # Erstellt ein temporäres Update-Script, das das Hauptscript ersetzt und neu startet
+                # Cleanup: Warte maximal 10 Sekunden auf das Beenden des Hauptscripts, dann fahre mit dem Update fort
                 $updateScript = @"
 Start-Sleep -Seconds 2
-# Warten, bis das Hauptscript nicht mehr läuft
-while (Get-Process -Id $PID -ErrorAction SilentlyContinue) { Start-Sleep -Milliseconds 500 }
+$timeout = 10
+$elapsed = 0
+while (Get-Process -Id $PID -ErrorAction SilentlyContinue) {
+    Start-Sleep -Milliseconds 500
+    $elapsed += 0.5
+    if ($elapsed -ge $timeout) { break }
+}
 # Ersetzen
 Move-Item -Path '$newScriptPath' -Destination '$scriptPath' -Force
 # Neues Script starten
@@ -191,6 +245,7 @@ Remove-Item -Path '$updateScriptPath' -Force
     }
     catch {
         Write-Log "Fehler beim Update-Check: $($_.Exception.Message)"
+        [System.Windows.MessageBox]::Show("Fehler beim Update-Check: $($_.Exception.Message)", "Update-Fehler", 'OK', 'Error')
     }
 }
 
