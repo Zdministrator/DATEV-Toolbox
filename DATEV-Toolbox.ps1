@@ -97,7 +97,7 @@ $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
 # Setzt die lokale Versionsnummer und ergänzt sie im Fenstertitel
-$localVersion = "1.0.2"
+$localVersion = "1.0.3"
 $window.Title = "DATEV Toolbox v$localVersion"
 
 # URLs für Online-Update-Prüfung und Script-Download
@@ -146,6 +146,37 @@ function Write-Log($message) {
     }
 }
 
+# Fehlerprotokollierung in Datei (kritische Fehler)
+function Write-ErrorLog($message) {
+    # Ermittle das Scriptverzeichnis
+    if ($PSCommandPath) {
+        $logDir = Split-Path -Parent $PSCommandPath
+    } elseif ($MyInvocation.MyCommand.Path) {
+        $logDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    } else {
+        $logDir = $PSScriptRoot
+    }
+    $logPath = Join-Path $logDir 'DATEV-Toolbox-Fehler.log'
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    Add-Content -Path $logPath -Value "[$timestamp] $message"
+}
+
+# Hilfsfunktion für numerischen Versionsvergleich
+function Compare-Version {
+    param(
+        [string]$v1,
+        [string]$v2
+    )
+    try {
+        $ver1 = [Version]$v1
+        $ver2 = [Version]$v2
+        return $ver1.CompareTo($ver2)
+    } catch {
+        # Fallback auf Stringvergleich, falls Version-Parsing fehlschlägt
+        return [string]::Compare($v1, $v2)
+    }
+}
+
 # Prüft beim Start, ob eine neue Version des Scripts online verfügbar ist und bietet ggf. ein Update an
 function Test-ForUpdate {
     # Prüfe Internetverbindung vor dem Update-Check
@@ -173,7 +204,8 @@ function Test-ForUpdate {
         $reader.Close()
         $response.Close()
         Write-Log "Lokale Version: $localVersion, Online-Version: $remoteVersion"
-        if ($remoteVersion -and ($remoteVersion -ne $localVersion)) {
+        $cmp = Compare-Version $localVersion $remoteVersion
+        if ($remoteVersion -and ($cmp -lt 0)) {
             Write-Log "Neue Version gefunden: $remoteVersion (aktuell: $localVersion)"
             $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen?", "Update verfügbar", 'YesNo', 'Information')
             if ($result -eq 'Yes') {
@@ -245,6 +277,7 @@ Remove-Item -Path '$updateScriptPath' -Force
     }
     catch {
         Write-Log "Fehler beim Update-Check: $($_.Exception.Message)"
+        Write-ErrorLog "Fehler beim Update-Check: $($_.Exception.Message)"
         [System.Windows.MessageBox]::Show("Fehler beim Update-Check: $($_.Exception.Message)", "Update-Fehler", 'OK', 'Error')
     }
 }
@@ -445,6 +478,19 @@ Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
     Write-Log "Öffne Download-Ordner..."
     Start-Process explorer.exe $targetDir
 }
+
+# Tooltips für alle Buttons ergänzen
+$Controls["btnArbeitsplatz"].ToolTip = "Startet den DATEV-Arbeitsplatz."
+$Controls["btnInstallationsmanager"].ToolTip = "Startet den DATEV-Installationsmanager."
+$Controls["btnServicetool"].ToolTip = "Startet das DATEV-Servicetool."
+$Controls["btnKonfigDBTools"].ToolTip = "Startet die KonfigDB-Tools."
+$Controls["btnEOAufgabenplanung"].ToolTip = "Startet die EO Aufgabenplanung."
+$Controls["btnEODBconfig"].ToolTip = "Startet die EODBconfig."
+$Controls["btnDownloadSicherheitspaketCompact"].ToolTip = "Lädt das Sicherheitspaket compact herunter."
+$Controls["btnDownloadFernbetreuungOnline"].ToolTip = "Lädt die Fernbetreuung Online herunter."
+$Controls["btnDownloadBelegtransfer"].ToolTip = "Lädt Belegtransfer V. 5.46 herunter."
+$Controls["btnDownloadServerprep"].ToolTip = "Lädt Serverprep herunter."
+$Controls["btnDownloadDeinstallationsnacharbeiten"].ToolTip = "Lädt das Deinstallationsnacharbeiten-Tool herunter."
 
 # Prüft nach dem Laden des Fensters auf Updates
 Test-ForUpdate
