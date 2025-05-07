@@ -113,7 +113,7 @@ function Initialize-Controls {
         "btnArbeitsplatz", "btnInstallationsmanager", "btnServicetool", "btnKonfigDBTools", "btnEOAufgabenplanung", "btnEODBconfig",
         "btnDATEVHilfeCenter", "btnServicekontaktuebersicht", "btnMyDATEVPortal", "btnDATEVUnternehmenOnline", "btnLogistikauftragOnline",
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
-        "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDATEVDownloadbereich", "btnDownloadSicherheitspaketCompact",
+        "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDownloadSicherheitspaketCompact",
         "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
         "btnOpenDownloadFolder", "menuCheckUpdate"
     )
@@ -130,6 +130,18 @@ if ($global:Controls["menuCheckUpdate"]) {
     $global:Controls["menuCheckUpdate"].Add_Click({
         Test-ForUpdate
     })
+}
+
+# Utility für Logging im Event-Handler (direkt ins Log-Control schreiben)
+function Write-LogDirect {
+    param(
+        [string]$message
+    )
+    $timestamp = Get-Date -Format 'HH:mm:ss'
+    if ($null -ne $global:Controls["txtLog"]) {
+        $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
+        $global:Controls["txtLog"].ScrollToEnd()
+    }
 }
 
 # Schreibt eine Logzeile in das Ausgabefeld (txtLog)
@@ -237,6 +249,10 @@ function Test-ForUpdate {
                 Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
                 Write-Log "Neue Version wurde als $newScriptPath gespeichert. Update-Vorgang wird vorbereitet."
 
+                # Zeige nach erfolgreichem Update einen Changelog-Link an (sofern vorhanden)
+                Write-Log "Update abgeschlossen. Changelog siehe: https://github.com/Zdministrator/DATEV-Toolbox/releases"
+                [System.Windows.MessageBox]::Show("Das Update wurde abgeschlossen. Eine Übersicht der Änderungen finden Sie unter:https://github.com/Zdministrator/DATEV-Toolbox/releases", "Update abgeschlossen", 'OK', 'Information')
+
                 # Cleanup: Warte maximal 10 Sekunden auf das Beenden des Hauptscripts, dann fahre mit dem Update fort
                 $updateScript = @"
 Start-Sleep -Seconds 2
@@ -304,21 +320,14 @@ function Register-ToolButton {
     }
 
     $btn.Add_Click({
-            $timestamp = Get-Date -Format 'HH:mm:ss'
-            try {
-                Start-Process -FilePath $exe -ErrorAction Stop
-                if ($null -ne $global:Controls["txtLog"]) {
-                    $global:Controls["txtLog"].AppendText("[$timestamp] $toolName gestartet: $exe`n")
-                    $global:Controls["txtLog"].ScrollToEnd()
-                }
-            }
-            catch {
-                if ($null -ne $global:Controls["txtLog"]) {
-                    $global:Controls["txtLog"].AppendText("[$timestamp] Fehler beim Start von ${toolName}: $($_.Exception.Message)`n")
-                    $global:Controls["txtLog"].ScrollToEnd()
-                }
-            }
-        }.GetNewClosure())
+        try {
+            Start-Process -FilePath $exe -ErrorAction Stop
+            Write-LogDirect "$toolName gestartet: $exe"
+        }
+        catch {
+            Write-LogDirect "Fehler beim Start von ${toolName}: $($_.Exception.Message)"
+        }
+    }.GetNewClosure())
 }
 
 # Definiert die Zuordnung von Buttons zu lokalen Programmen
@@ -344,45 +353,33 @@ function Register-WebLinkHandler {
         [string]$Url
     )
     $Button.Add_Click({
-            $timestamp = Get-Date -Format 'HH:mm:ss'
-            if ($null -ne $global:Controls["txtLog"]) {
-                $global:Controls["txtLog"].AppendText("[$timestamp] Öffne $Name...`n")
-                $global:Controls["txtLog"].ScrollToEnd()
-            }
-            # Webverbindung direkt im Handler prüfen (HEAD-Request)
+        $btnContent = $Button.Content
+        Write-LogDirect "Öffne $btnContent..."
+        # Webverbindung direkt im Handler prüfen (HEAD-Request)
+        $reachable = $false
+        try {
+            $request = [System.Net.WebRequest]::Create($Url)
+            $request.Method = "HEAD"
+            $request.Timeout = 5000
+            $response = $request.GetResponse()
+            $response.Close()
+            $reachable = $true
+        }
+        catch {
             $reachable = $false
-            try {
-                $request = [System.Net.WebRequest]::Create($Url)
-                $request.Method = "HEAD"
-                $request.Timeout = 5000
-                $response = $request.GetResponse()
-                $response.Close()
-                $reachable = $true
-            }
-            catch {
-                $reachable = $false
-            }
-            if (-not $reachable) {
-                if ($null -ne $global:Controls["txtLog"]) {
-                    $global:Controls["txtLog"].AppendText("[$timestamp] Keine Verbindung zu $Url möglich – $Name wird nicht geöffnet.`n")
-                    $global:Controls["txtLog"].ScrollToEnd()
-                }
-                return
-            }
-            try {
-                Start-Process "explorer.exe" $Url
-                if ($null -ne $global:Controls["txtLog"]) {
-                    $global:Controls["txtLog"].AppendText("[$timestamp] $Name geöffnet.`n")
-                    $global:Controls["txtLog"].ScrollToEnd()
-                }
-            }
-            catch {
-                if ($null -ne $global:Controls["txtLog"]) {
-                    $global:Controls["txtLog"].AppendText(("[$timestamp] Fehler beim Öffnen von {0}: {1}`n" -f $Name, $_))
-                    $global:Controls["txtLog"].ScrollToEnd()
-                }
-            }
-        }.GetNewClosure())
+        }
+        if (-not $reachable) {
+            Write-LogDirect "Keine Verbindung zu $Url möglich – $btnContent wird nicht geöffnet."
+            return
+        }
+        try {
+            Start-Process "explorer.exe" $Url
+            Write-LogDirect "$btnContent geöffnet."
+        }
+        catch {
+            Write-LogDirect ("Fehler beim Öffnen von {0}: {1}" -f $btnContent, $_)
+        }
+    }.GetNewClosure())
 }
 
 # Definiert die Zuordnung von Cloud-Buttons zu Weblinks
@@ -397,8 +394,8 @@ $cloudButtons = @(
     @{ Name = "btnDATEVRechteverwaltungOnline"; Url = "https://apps.datev.de/rvo-administration" },
     @{ Name = "btnSmartLoginAdministration"; Url = "https://go.datev.de/smartlogin-administration" },
     @{ Name = "btnMyDATEVBestandsmanagement"; Url = "https://apps.datev.de/mydata/" },
-    @{ Name = "btnWeitereCloudAnwendungen"; Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" }
-    @{ Name = "btnDATEVDownloadbereich"; Url = "https://www.datev.de/download/" }
+    @{ Name = "btnWeitereCloudAnwendungen"; Url = "https://www.datev.de/web/de/mydatev/datev-cloud-anwendungen/" },
+    @{ Name = "btnDatevDownloadbereich"; Url = "https://www.datev.de/download/" }
 )
 
 # Registriert Event-Handler für alle Cloud/Weblink-Buttons
@@ -416,7 +413,8 @@ function Get-DatevFile {
         [string]$FileName
     )
     $downloads = [Environment]::GetFolderPath('UserProfile')
-    $targetDir = Join-Path $downloads "Downloads\DATEV-Toolbox"
+    $targetDir = Join-Path $downloads "Downloads"
+    $targetDir = Join-Path $targetDir "DATEV-Toolbox"
     if (-not (Test-Path $targetDir)) {
         New-Item -Path $targetDir -ItemType Directory | Out-Null
     }
@@ -430,7 +428,16 @@ function Get-DatevFile {
     }
     try {
         Write-Log "Lade $FileName herunter ..."
-        Invoke-WebRequest -Uri $Url -OutFile $targetFile -UseBasicParsing
+        # Timeout für Webanfrage setzen
+        $webRequest = [System.Net.WebRequest]::Create($Url)
+        $webRequest.Timeout = 10000 # 10 Sekunden Timeout
+        $response = $webRequest.GetResponse()
+        $stream = $response.GetResponseStream()
+        $fileStream = [System.IO.File]::Create($targetFile)
+        $stream.CopyTo($fileStream)
+        $fileStream.Close()
+        $stream.Close()
+        $response.Close()
         Write-Log "Download abgeschlossen: $targetFile"
         [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
     }
@@ -471,7 +478,8 @@ Register-ButtonAction -Button $Controls["btnDownloadDeinstallationsnacharbeiten"
 # Registriert Event-Handler für das Öffnen des Download-Ordners
 Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
     $downloads = [Environment]::GetFolderPath('UserProfile')
-    $targetDir = Join-Path $downloads "Downloads\DATEV-Toolbox"
+    $targetDir = Join-Path $downloads "Downloads"
+    $targetDir = Join-Path $targetDir "DATEV-Toolbox"
     if (-not (Test-Path $targetDir)) {
         New-Item -Path $targetDir -ItemType Directory | Out-Null
     }
