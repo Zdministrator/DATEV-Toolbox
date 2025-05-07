@@ -115,7 +115,8 @@ function Write-Log($message) {
             $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
             $global:Controls["txtLog"].ScrollToEnd()
         }
-    } catch {
+    }
+    catch {
         # Fehler beim Loggen ignorieren, damit das Script weiterläuft
     }
 }
@@ -163,7 +164,8 @@ Remove-Item -Path '$updateScriptPath' -Force
                 try {
                     Set-Content -Path $updateScriptPath -Value $updateScript -Encoding UTF8
                     Write-Log "Update-Script wurde erstellt: $updateScriptPath"
-                } catch {
+                }
+                catch {
                     Write-Log "Fehler beim Erstellen des Update-Scripts: $_"
                 }
                 [System.Windows.MessageBox]::Show("Das Programm wird für das Update beendet und automatisch neu gestartet.", "Update wird durchgeführt", 'OK', 'Information')
@@ -200,26 +202,27 @@ function Register-ToolButton {
         $btn.ToolTip = "${toolName} nicht gefunden: $exe"
         Write-Log "$toolName nicht gefunden und Button deaktiviert: $exe"
         return
-    } else {
+    }
+    else {
         $btn.ToolTip = "$toolName starten"
     }
 
     $btn.Add_Click({
-        $timestamp = Get-Date -Format 'HH:mm:ss'
-        try {
-            Start-Process -FilePath $exe -ErrorAction Stop
-            if ($null -ne $global:Controls["txtLog"]) {
-                $global:Controls["txtLog"].AppendText("[$timestamp] $toolName gestartet: $exe`n")
-                $global:Controls["txtLog"].ScrollToEnd()
+            $timestamp = Get-Date -Format 'HH:mm:ss'
+            try {
+                Start-Process -FilePath $exe -ErrorAction Stop
+                if ($null -ne $global:Controls["txtLog"]) {
+                    $global:Controls["txtLog"].AppendText("[$timestamp] $toolName gestartet: $exe`n")
+                    $global:Controls["txtLog"].ScrollToEnd()
+                }
             }
-        }
-        catch {
-            if ($null -ne $global:Controls["txtLog"]) {
-                $global:Controls["txtLog"].AppendText("[$timestamp] Fehler beim Start von ${toolName}: $($_.Exception.Message)`n")
-                $global:Controls["txtLog"].ScrollToEnd()
+            catch {
+                if ($null -ne $global:Controls["txtLog"]) {
+                    $global:Controls["txtLog"].AppendText("[$timestamp] Fehler beim Start von ${toolName}: $($_.Exception.Message)`n")
+                    $global:Controls["txtLog"].ScrollToEnd()
+                }
             }
-        }
-    }.GetNewClosure())
+        }.GetNewClosure())
 }
 
 # Definiert die Zuordnung von Buttons zu lokalen Programmen
@@ -245,44 +248,45 @@ function Register-WebLinkHandler {
         [string]$Url
     )
     $Button.Add_Click({
-        $timestamp = Get-Date -Format 'HH:mm:ss'
-        if ($null -ne $global:Controls["txtLog"]) {
-            $global:Controls["txtLog"].AppendText("[$timestamp] Öffne $Name...`n")
-            $global:Controls["txtLog"].ScrollToEnd()
-        }
-        # Webverbindung direkt im Handler prüfen (HEAD-Request)
-        $reachable = $false
-        try {
-            $request = [System.Net.WebRequest]::Create($Url)
-            $request.Method = "HEAD"
-            $request.Timeout = 5000
-            $response = $request.GetResponse()
-            $response.Close()
-            $reachable = $true
-        } catch {
+            $timestamp = Get-Date -Format 'HH:mm:ss'
+            if ($null -ne $global:Controls["txtLog"]) {
+                $global:Controls["txtLog"].AppendText("[$timestamp] Öffne $Name...`n")
+                $global:Controls["txtLog"].ScrollToEnd()
+            }
+            # Webverbindung direkt im Handler prüfen (HEAD-Request)
             $reachable = $false
-        }
-        if (-not $reachable) {
-            if ($null -ne $global:Controls["txtLog"]) {
-                $global:Controls["txtLog"].AppendText("[$timestamp] Keine Verbindung zu $Url möglich – $Name wird nicht geöffnet.`n")
-                $global:Controls["txtLog"].ScrollToEnd()
+            try {
+                $request = [System.Net.WebRequest]::Create($Url)
+                $request.Method = "HEAD"
+                $request.Timeout = 5000
+                $response = $request.GetResponse()
+                $response.Close()
+                $reachable = $true
             }
-            return
-        }
-        try {
-            Start-Process "explorer.exe" $Url
-            if ($null -ne $global:Controls["txtLog"]) {
-                $global:Controls["txtLog"].AppendText("[$timestamp] $Name geöffnet.`n")
-                $global:Controls["txtLog"].ScrollToEnd()
+            catch {
+                $reachable = $false
             }
-        }
-        catch {
-            if ($null -ne $global:Controls["txtLog"]) {
-                $global:Controls["txtLog"].AppendText(("[$timestamp] Fehler beim Öffnen von {0}: {1}`n" -f $Name, $_))
-                $global:Controls["txtLog"].ScrollToEnd()
+            if (-not $reachable) {
+                if ($null -ne $global:Controls["txtLog"]) {
+                    $global:Controls["txtLog"].AppendText("[$timestamp] Keine Verbindung zu $Url möglich – $Name wird nicht geöffnet.`n")
+                    $global:Controls["txtLog"].ScrollToEnd()
+                }
+                return
             }
-        }
-    }.GetNewClosure())
+            try {
+                Start-Process "explorer.exe" $Url
+                if ($null -ne $global:Controls["txtLog"]) {
+                    $global:Controls["txtLog"].AppendText("[$timestamp] $Name geöffnet.`n")
+                    $global:Controls["txtLog"].ScrollToEnd()
+                }
+            }
+            catch {
+                if ($null -ne $global:Controls["txtLog"]) {
+                    $global:Controls["txtLog"].AppendText(("[$timestamp] Fehler beim Öffnen von {0}: {1}`n" -f $Name, $_))
+                    $global:Controls["txtLog"].ScrollToEnd()
+                }
+            }
+        }.GetNewClosure())
 }
 
 # Definiert die Zuordnung von Cloud-Buttons zu Weblinks
