@@ -205,12 +205,19 @@ function Register-ToolButton {
     }
 
     $btn.Add_Click({
+        $timestamp = Get-Date -Format 'HH:mm:ss'
         try {
             Start-Process -FilePath $exe -ErrorAction Stop
-            Write-Log "$toolName gestartet: $exe"
+            if ($null -ne $global:Controls["txtLog"]) {
+                $global:Controls["txtLog"].AppendText("[$timestamp] $toolName gestartet: $exe`n")
+                $global:Controls["txtLog"].ScrollToEnd()
+            }
         }
         catch {
-            Write-Log "Fehler beim Start von ${toolName}: $($_.Exception.Message)"
+            if ($null -ne $global:Controls["txtLog"]) {
+                $global:Controls["txtLog"].AppendText("[$timestamp] Fehler beim Start von ${toolName}: $($_.Exception.Message)`n")
+                $global:Controls["txtLog"].ScrollToEnd()
+            }
         }
     }.GetNewClosure())
 }
@@ -221,53 +228,13 @@ $toolButtons = @(
     @{ Button = "btnServicetool"; Exe = "$env:DATEVPP\PROGRAMM\SRVTOOL\Srvtool.exe"; Name = "Servicetool" },
     @{ Button = "btnKonfigDBTools"; Exe = "$env:DATEVPP\PROGRAMM\B0001502\cdbtool.exe"; Name = "KonfigDB-Tools" },
     @{ Button = "btnEOAufgabenplanung"; Exe = "$env:DATEVPP\PROGRAMM\I0000085\EOControl.exe"; Name = "EO Aufgabenplanung" },
-    @{ Button = "btnEODBconfig"; Exe = "$env:DATEVPP\PROGRAMM\EODB\EODBConfig.exe"; Name = "EODBconfig" }
+    @{ Button = "btnEODBconfig"; Exe = "$env:DATEVPP\PROGRAMM\EODB\EODBConfig.exe"; Name = "EODBconfig" },
+    @{ Button = "btnArbeitsplatz"; Exe = "$env:DATEVPP\PROGRAMM\K0005000\Arbeitsplatz.exe"; Name = "DATEV-Arbeitsplatz" }
 )
 
 # Registriert Event-Handler für alle Tool-Buttons
 foreach ($entry in $toolButtons) {
     Register-ToolButton -ButtonVar $entry.Button -ExePath $entry.Exe -ToolName $entry.Name
-}
-
-# Prüft, ob eine Webadresse erreichbar ist (HEAD-Request)
-function Test-WebConnection {
-    param (
-        [Parameter(Mandatory)][string]$Url
-    )
-    try {
-        $request = [System.Net.WebRequest]::Create($Url)
-        $request.Method = "HEAD"
-        $request.Timeout = 5000
-        $response = $request.GetResponse()
-        $response.Close()
-        return $true
-    }
-    catch {
-        return $false
-    }
-}
-
-# Öffnet einen Weblink im Standardbrowser und loggt das Ergebnis
-function Start-WebLink {
-    param (
-        [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][string]$Url
-    )
-
-    Write-Log "Öffne $Name..."
-
-    if (-not (Test-WebConnection -Url $Url)) {
-        Write-Log "Keine Verbindung zu $Url möglich – $Name wird nicht geöffnet."
-        return
-    }
-
-    try {
-        Start-Process $Url
-        Write-Log "$Name geöffnet."
-    }
-    catch {
-        Write-Log ("Fehler beim Öffnen von {0}: {1}" -f $Name, $_)
-    }
 }
 
 # Registriert einen Button für das Öffnen eines Weblinks
@@ -277,10 +244,45 @@ function Register-WebLinkHandler {
         [string]$Name,
         [string]$Url
     )
-
     $Button.Add_Click({
-            Start-WebLink -Name $Name -Url $Url
-        }.GetNewClosure())
+        $timestamp = Get-Date -Format 'HH:mm:ss'
+        if ($null -ne $global:Controls["txtLog"]) {
+            $global:Controls["txtLog"].AppendText("[$timestamp] Öffne $Name...`n")
+            $global:Controls["txtLog"].ScrollToEnd()
+        }
+        # Webverbindung direkt im Handler prüfen (HEAD-Request)
+        $reachable = $false
+        try {
+            $request = [System.Net.WebRequest]::Create($Url)
+            $request.Method = "HEAD"
+            $request.Timeout = 5000
+            $response = $request.GetResponse()
+            $response.Close()
+            $reachable = $true
+        } catch {
+            $reachable = $false
+        }
+        if (-not $reachable) {
+            if ($null -ne $global:Controls["txtLog"]) {
+                $global:Controls["txtLog"].AppendText("[$timestamp] Keine Verbindung zu $Url möglich – $Name wird nicht geöffnet.`n")
+                $global:Controls["txtLog"].ScrollToEnd()
+            }
+            return
+        }
+        try {
+            Start-Process "explorer.exe" $Url
+            if ($null -ne $global:Controls["txtLog"]) {
+                $global:Controls["txtLog"].AppendText("[$timestamp] $Name geöffnet.`n")
+                $global:Controls["txtLog"].ScrollToEnd()
+            }
+        }
+        catch {
+            if ($null -ne $global:Controls["txtLog"]) {
+                $global:Controls["txtLog"].AppendText(("[$timestamp] Fehler beim Öffnen von {0}: {1}`n" -f $Name, $_))
+                $global:Controls["txtLog"].ScrollToEnd()
+            }
+        }
+    }.GetNewClosure())
 }
 
 # Definiert die Zuordnung von Cloud-Buttons zu Weblinks
