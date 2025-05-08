@@ -1,4 +1,6 @@
-﻿Add-Type -AssemblyName PresentationFramework
+﻿[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+Add-Type -AssemblyName PresentationFramework
 
 Add-Type -Name Win -Namespace Console -MemberDefinition '
 [DllImport("kernel32.dll")]
@@ -110,7 +112,7 @@ $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
 # Setzt die lokale Versionsnummer und ergänzt sie im Fenstertitel
-$localVersion = "1.0.6"
+$localVersion = "1.0.7"
 $window.Title = "DATEV Toolbox v$localVersion"
 
 # URLs für Online-Update-Prüfung und Script-Download
