@@ -502,11 +502,17 @@ Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
 
 # Registriert Event-Handler für den Leistungsindex-Button
 if ($global:Controls["btnLeistungsindex"]) {
-    $global:Controls["btnLeistungsindex"].Add_Click({
-        $exe = "$env:DATEVPP\PROGRAMM\RWAPPLIC\irw.exe"
-        Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011 -c" -Wait
-        Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011" -Wait
-    })
+    $exe = "$env:DATEVPP\PROGRAMM\RWAPPLIC\irw.exe"
+    if (-not (Test-Path $exe)) {
+        $global:Controls["btnLeistungsindex"].IsEnabled = $false
+        $global:Controls["btnLeistungsindex"].ToolTip = "Leistungsindex-Programm nicht gefunden: $exe"
+    } else {
+        $global:Controls["btnLeistungsindex"].ToolTip = "Startet den Leistungsindex."
+        $global:Controls["btnLeistungsindex"].Add_Click({
+            Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011 -c" -Wait
+            Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011" -Wait
+        })
+    }
 }
 
 # Registriert Event-Handler für den Button 'btnCheckUpdateSettings'
