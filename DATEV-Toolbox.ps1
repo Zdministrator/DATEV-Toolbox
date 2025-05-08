@@ -1,5 +1,15 @@
 ﻿Add-Type -AssemblyName PresentationFramework
 
+Add-Type -Name Win -Namespace Console -MemberDefinition '
+[DllImport("kernel32.dll")]
+public static extern IntPtr GetConsoleWindow();
+[DllImport("user32.dll")]
+public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+'
+$consolePtr = [Console.Win]::GetConsoleWindow()
+# 0 = SW_HIDE, 5 = SW_SHOW
+[Console.Win]::ShowWindow($consolePtr, 0)
+
 # Lädt das XAML-Layout für das Hauptfenster der Toolbox
 # und definiert die Benutzeroberfläche mit Tabs und Buttons
 [xml]$xaml = @"
@@ -99,7 +109,7 @@ $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
 # Setzt die lokale Versionsnummer und ergänzt sie im Fenstertitel
-$localVersion = "1.0.3"
+$localVersion = "1.0.5"
 $window.Title = "DATEV Toolbox v$localVersion"
 
 # URLs für Online-Update-Prüfung und Script-Download
