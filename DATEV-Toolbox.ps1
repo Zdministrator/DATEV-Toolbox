@@ -94,6 +94,7 @@ $consolePtr = [Console.Win]::GetConsoleWindow()
                         <StackPanel Orientation="Vertical" Margin="10">
                             <TextBlock Text='Einstellungen (Platzhalter)' FontWeight='Bold' FontSize='14' Margin='0,0,0,10'/>
                             <TextBlock Text='Hier können Einstellungen ergänzt werden.' />
+                            <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="0,20,0,0" />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -109,7 +110,7 @@ $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
 
 # Setzt die lokale Versionsnummer und ergänzt sie im Fenstertitel
-$localVersion = "1.0.5"
+$localVersion = "1.0.6"
 $window.Title = "DATEV Toolbox v$localVersion"
 
 # URLs für Online-Update-Prüfung und Script-Download
@@ -127,7 +128,7 @@ function Initialize-Controls {
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
         "btnDownloadSicherheitspaketCompact", "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
-        "btnOpenDownloadFolder", "menuCheckUpdate", "btnNgenAll40", "btnLeistungsindex", "menuSettings"
+        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "menuSettings", "btnCheckUpdateSettings"
     )
     foreach ($name in $controlNames) {
         $global:Controls[$name] = $window.FindName($name)
@@ -136,13 +137,6 @@ function Initialize-Controls {
 
 # Nach dem Laden des Fensters Controls initialisieren
 Initialize-Controls
-
-# Registriert Event-Handler für den Menüpunkt "Auf Updates prüfen"
-if ($global:Controls["menuCheckUpdate"]) {
-    $global:Controls["menuCheckUpdate"].Add_Click({
-        Test-ForUpdate
-    })
-}
 
 # Utility für Logging im Event-Handler (direkt ins Log-Control schreiben)
 function Write-LogDirect {
@@ -218,6 +212,7 @@ function Test-ForUpdate {
     }
     try {
         Write-Log "Prüfe auf Updates..."
+        $window.Dispatcher.Invoke([action]{}, 'Background')
         # Timeout für Webanfrage setzen
         $webRequest = [System.Net.WebRequest]::Create($versionUrl)
         $webRequest.Timeout = 5000 # 5 Sekunden Timeout
@@ -258,6 +253,7 @@ function Test-ForUpdate {
                 $newScriptPath = Join-Path $scriptDir "DATEV-Toolbox.ps1.new"
                 $updateScriptPath = Join-Path $scriptDir "Update-DATEV-Toolbox.ps1"
                 Write-Log "Lade neue Version herunter..."
+                $window.Dispatcher.Invoke([action]{}, 'Background')
                 Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
                 Write-Log "Neue Version wurde als $newScriptPath gespeichert. Update-Vorgang wird vorbereitet."
 
@@ -449,6 +445,7 @@ function Get-DatevFile {
     }
     try {
         Write-Log "Lade $FileName herunter ..."
+        $window.Dispatcher.Invoke([action]{}, 'Background') # UI-Update erzwingen
         # Timeout für Webanfrage setzen
         $webRequest = [System.Net.WebRequest]::Create($Url)
         $webRequest.Timeout = 10000 # 10 Sekunden Timeout
@@ -512,6 +509,13 @@ if ($global:Controls["btnLeistungsindex"]) {
     })
 }
 
+# Registriert Event-Handler für den Button 'btnCheckUpdateSettings'
+if ($global:Controls["btnCheckUpdateSettings"]) {
+    $global:Controls["btnCheckUpdateSettings"].Add_Click({
+        Test-ForUpdate
+    })
+}
+
 # Tooltips für alle Buttons ergänzen
 $Controls["btnArbeitsplatz"].ToolTip = "Startet den DATEV-Arbeitsplatz."
 $Controls["btnInstallationsmanager"].ToolTip = "Startet den DATEV-Installationsmanager."
@@ -524,6 +528,7 @@ $Controls["btnDownloadFernbetreuungOnline"].ToolTip = "Lädt die Fernbetreuung O
 $Controls["btnDownloadBelegtransfer"].ToolTip = "Lädt Belegtransfer V. 5.46 herunter."
 $Controls["btnDownloadServerprep"].ToolTip = "Lädt Serverprep herunter."
 $Controls["btnDownloadDeinstallationsnacharbeiten"].ToolTip = "Lädt das Deinstallationsnacharbeiten-Tool herunter."
+$Controls["btnCheckUpdateSettings"].ToolTip = "Prüft das Script auf Updates."
 
 # Prüft nach dem Laden des Fensters auf Updates
 Test-ForUpdate
