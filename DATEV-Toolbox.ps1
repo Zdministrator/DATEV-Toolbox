@@ -1,5 +1,6 @@
 ﻿#region Administrator- und Sicherheits-Setup
-# Administratorrechte prüfen und ggf. Skript neu starten
+# Prüft, ob das Skript mit Administratorrechten läuft und startet es ggf. neu mit erhöhten Rechten.
+# Aktiviert TLS 1.2 für Webanfragen und blendet das PowerShell-Konsolenfenster aus.
 $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $IsAdmin) {
     Add-Type -AssemblyName PresentationFramework
@@ -24,6 +25,7 @@ $consolePtr = [Console.Win]::GetConsoleWindow()
 #endregion
 
 #region Logging-Funktionen
+# Funktionen für die Protokollierung von Aktionen und Fehlern im Log-Feld und in einer Datei.
 function Write-Log {
     param([string]$message)
     $timestamp = Get-Date -Format 'HH:mm:ss'
@@ -57,7 +59,7 @@ function Write-ErrorLog($message) {
 #endregion
 
 #region UI-Initialisierung
-# Lädt das XAML-Layout für das Hauptfenster der Toolbox
+# Lädt das XAML-Layout für das Hauptfenster und initialisiert das WPF-Fensterobjekt.
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         Title="DATEV Toolbox" MinHeight="400" Width="400" ResizeMode="CanMinimize">
@@ -156,6 +158,7 @@ $window.Title = "DATEV Toolbox v$localVersion"
 #endregion
 
 #region Controls-Initialisierung
+# Sammelt alle relevanten UI-Controls in einer Hashtable für den globalen Zugriff.
 function Initialize-Controls {
     $global:Controls = @{
         "txtLog" = $window.FindName("txtLog")
@@ -176,6 +179,7 @@ Initialize-Controls
 #endregion
 
 #region Hilfsfunktionen
+# Diverse Hilfsfunktionen, z.B. für Versionsvergleiche.
 function Compare-Version {
     param([string]$v1, [string]$v2)
     try {
@@ -189,6 +193,7 @@ function Compare-Version {
 #endregion
 
 #region Download-Funktionen
+# Funktionen zum Ermitteln des Download-Ordners und Herunterladen von Dateien mit Fortschritts- und Fehlerbehandlung.
 function Get-DownloadFolder {
     $downloads = [Environment]::GetFolderPath('UserProfile')
     $targetDir = Join-Path $downloads "Downloads"
@@ -231,6 +236,7 @@ function Get-DatevFile {
 #endregion
 
 #region Update-Funktionen
+# Funktionen zum Prüfen und Durchführen von Updates des Skripts über GitHub.
 $versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
 $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 function Test-ForUpdate {
@@ -325,6 +331,7 @@ Remove-Item -Path '$updateScriptPath' -Force
 #endregion
 
 #region Button- und Event-Handler-Registrierung
+# Funktionen zur Registrierung von Event-Handlern für Buttons und Weblinks.
 function Register-ToolButton {
     param ([string]$ButtonVar, [string]$ExePath, [string]$ToolName)
     $btn = $Controls[$ButtonVar]
@@ -382,6 +389,7 @@ function Register-ButtonAction {
 #endregion
 
 #region Button- und Event-Handler-Zuordnung
+# Ordnet die definierten Funktionen den jeweiligen Buttons und Aktionen im UI zu.
 $toolButtons = @(
     @{ Button = "btnInstallationsmanager"; Exe = "$env:DATEVPP\PROGRAMM\INSTALL\DvInesInstMan.exe"; Name = "Installationsmanager" },
     @{ Button = "btnServicetool"; Exe = "$env:DATEVPP\PROGRAMM\SRVTOOL\Srvtool.exe"; Name = "Servicetool" },
@@ -474,5 +482,6 @@ $Controls["btnDownloadDeinstallationsnacharbeiten"].ToolTip = "Lädt das Deinsta
 $Controls["btnCheckUpdateSettings"].ToolTip = "Prüft das Script auf Updates."
 #endregion
 
+# Startet die automatische Update-Prüfung und zeigt das Hauptfenster an.
 Test-ForUpdate
 $window.ShowDialog() | Out-Null
