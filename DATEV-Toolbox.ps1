@@ -1,4 +1,5 @@
-﻿# Administratorrechte prüfen und ggf. Skript neu starten
+﻿#region Administrator- und Sicherheits-Setup
+# Administratorrechte prüfen und ggf. Skript neu starten
 $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $IsAdmin) {
     Add-Type -AssemblyName PresentationFramework
@@ -10,11 +11,8 @@ if (-not $IsAdmin) {
     [System.Diagnostics.Process]::Start($psi) | Out-Null
     exit
 }
-
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
 Add-Type -AssemblyName PresentationFramework
-
 Add-Type -Name Win -Namespace Console -MemberDefinition '
 [DllImport("kernel32.dll")]
 public static extern IntPtr GetConsoleWindow();
@@ -22,11 +20,44 @@ public static extern IntPtr GetConsoleWindow();
 public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 '
 $consolePtr = [Console.Win]::GetConsoleWindow()
-# 0 = SW_HIDE, 5 = SW_SHOW
 [Console.Win]::ShowWindow($consolePtr, 0)
+#endregion
 
+#region Logging-Funktionen
+function Write-Log {
+    param([string]$message)
+    $timestamp = Get-Date -Format 'HH:mm:ss'
+    try {
+        if ($null -ne $global:Controls["txtLog"]) {
+            $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
+            $global:Controls["txtLog"].ScrollToEnd()
+        }
+    } catch {}
+}
+function Write-LogDirect {
+    param([string]$message)
+    $timestamp = Get-Date -Format 'HH:mm:ss'
+    if ($null -ne $global:Controls["txtLog"]) {
+        $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
+        $global:Controls["txtLog"].ScrollToEnd()
+    }
+}
+function Write-ErrorLog($message) {
+    if ($PSCommandPath) {
+        $logDir = Split-Path -Parent $PSCommandPath
+    } elseif ($MyInvocation.MyCommand.Path) {
+        $logDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    } else {
+        $logDir = $PSScriptRoot
+    }
+    $logPath = Join-Path $logDir 'DATEV-Toolbox-Fehler.log'
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    Add-Content -Path $logPath -Value "[$timestamp] $message"
+}
+#endregion
+
+#region UI-Initialisierung
 # Lädt das XAML-Layout für das Hauptfenster der Toolbox
-# und definiert die Benutzeroberfläche mit Tabs und Buttons
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         Title="DATEV Toolbox" MinHeight="400" Width="400" ResizeMode="CanMinimize">
@@ -37,8 +68,8 @@ $consolePtr = [Console.Win]::GetConsoleWindow()
         <Grid Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" /> <!-- Menüleiste (entfernt) -->
-                <RowDefinition Height="100" /> <!-- Log-Ausgabe -->
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="100" />
             </Grid.RowDefinitions>
             <TabControl Grid.Row="0" Margin="0,0,0,0" VerticalAlignment="Stretch">
                 <TabItem Header="DATEV Tools">
@@ -91,7 +122,6 @@ $consolePtr = [Console.Win]::GetConsoleWindow()
                             <Button Name="btnDownloadBelegtransfer" Content="Belegtransfer V. 5.46" Height="30" Margin="5"/>
                             <Button Name="btnDownloadServerprep" Content="Serverprep" Height="30" Margin="5"/>
                             <Button Name="btnDownloadDeinstallationsnacharbeiten" Content="Deinstallationsnacharbeiten" Height="30" Margin="5"/>
-                            <!-- Hier können weitere Download-Buttons eingefügt werden -->
                             <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
                                 <Button.Content>
                                     <Viewbox Width="24" Height="24">
@@ -119,20 +149,13 @@ $consolePtr = [Console.Win]::GetConsoleWindow()
     </DockPanel>
 </Window>
 "@
-
-# Initialisiert das Fensterobjekt aus dem XAML
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
-
-# Setzt die lokale Versionsnummer und ergänzt sie im Fenstertitel
-$localVersion = "1.0.7"
+$localVersion = "1.0.8"
 $window.Title = "DATEV Toolbox v$localVersion"
+#endregion
 
-# URLs für Online-Update-Prüfung und Script-Download
-$versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
-$scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
-
-# Initialisiert alle UI-Controls und speichert sie in einer Hashtable für globale Nutzung
+#region Controls-Initialisierung
 function Initialize-Controls {
     $global:Controls = @{
         "txtLog" = $window.FindName("txtLog")
@@ -149,77 +172,73 @@ function Initialize-Controls {
         $global:Controls[$name] = $window.FindName($name)
     }
 }
-
-# Nach dem Laden des Fensters Controls initialisieren
 Initialize-Controls
+#endregion
 
-# Utility für Logging im Event-Handler (direkt ins Log-Control schreiben)
-function Write-LogDirect {
-    param(
-        [string]$message
-    )
-    $timestamp = Get-Date -Format 'HH:mm:ss'
-    if ($null -ne $global:Controls["txtLog"]) {
-        $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
-        $global:Controls["txtLog"].ScrollToEnd()
-    }
-}
-
-# Schreibt eine Logzeile in das Ausgabefeld (txtLog)
-function Write-Log($message) {
-    $timestamp = Get-Date -Format 'HH:mm:ss'
-    try {
-        if ($null -ne $global:Controls["txtLog"]) {
-            $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
-            $global:Controls["txtLog"].ScrollToEnd()
-        }
-    }
-    catch {
-        # Fehler beim Loggen ignorieren, damit das Script weiterläuft
-    }
-}
-
-# Fehlerprotokollierung in Datei (kritische Fehler)
-function Write-ErrorLog($message) {
-    # Ermittle das Scriptverzeichnis
-    if ($PSCommandPath) {
-        $logDir = Split-Path -Parent $PSCommandPath
-    } elseif ($MyInvocation.MyCommand.Path) {
-        $logDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    } else {
-        $logDir = $PSScriptRoot
-    }
-    $logPath = Join-Path $logDir 'DATEV-Toolbox-Fehler.log'
-    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-    Add-Content -Path $logPath -Value "[$timestamp] $message"
-}
-
-# Hilfsfunktion für numerischen Versionsvergleich
+#region Hilfsfunktionen
 function Compare-Version {
-    param(
-        [string]$v1,
-        [string]$v2
-    )
+    param([string]$v1, [string]$v2)
     try {
         $ver1 = [Version]$v1
         $ver2 = [Version]$v2
         return $ver1.CompareTo($ver2)
     } catch {
-        # Fallback auf Stringvergleich, falls Version-Parsing fehlschlägt
         return [string]::Compare($v1, $v2)
     }
 }
+#endregion
 
-# Prüft beim Start, ob eine neue Version des Scripts online verfügbar ist und bietet ggf. ein Update an
+#region Download-Funktionen
+function Get-DownloadFolder {
+    $downloads = [Environment]::GetFolderPath('UserProfile')
+    $targetDir = Join-Path $downloads "Downloads"
+    $targetDir = Join-Path $targetDir "DATEV-Toolbox"
+    if (-not (Test-Path $targetDir)) {
+        New-Item -Path $targetDir -ItemType Directory | Out-Null
+    }
+    return $targetDir
+}
+function Get-DatevFile {
+    param([string]$Url, [string]$FileName)
+    $targetDir = Get-DownloadFolder
+    $targetFile = Join-Path $targetDir $FileName
+    if (Test-Path $targetFile) {
+        $result = [System.Windows.MessageBox]::Show("Die Datei '$FileName' existiert bereits. Überschreiben?", "Datei existiert", 'YesNo', 'Warning')
+        if ($result -ne 'Yes') {
+            Write-Log "Download abgebrochen: $FileName existiert bereits."
+            return
+        }
+    }
+    try {
+        Write-Log "Lade $FileName herunter ..."
+        $window.Dispatcher.Invoke([action]{}, 'Background')
+        $webRequest = [System.Net.WebRequest]::Create($Url)
+        $webRequest.Timeout = 10000
+        $response = $webRequest.GetResponse()
+        $stream = $response.GetResponseStream()
+        $fileStream = [System.IO.File]::Create($targetFile)
+        $stream.CopyTo($fileStream)
+        $fileStream.Close()
+        $stream.Close()
+        $response.Close()
+        Write-Log "Download abgeschlossen: $targetFile"
+        [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
+    } catch {
+        Write-Log "Fehler beim Download: $($_.Exception.Message)"
+        [System.Windows.MessageBox]::Show("Fehler beim Download: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
+    }
+}
+#endregion
+
+#region Update-Funktionen
+$versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
+$scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 function Test-ForUpdate {
-    # Prüfe Internetverbindung vor dem Update-Check
     $testConnection = $false
     try {
         $ping = Test-Connection -ComputerName "www.google.com" -Count 1 -Quiet -ErrorAction Stop
         if ($ping) { $testConnection = $true }
-    } catch {
-        $testConnection = $false
-    }
+    } catch { $testConnection = $false }
     if (-not $testConnection) {
         Write-Log "Keine Internetverbindung. Update-Check abgebrochen."
         [System.Windows.MessageBox]::Show("Es konnte keine Internetverbindung festgestellt werden. Der Update-Check wird abgebrochen.", "Update-Fehler", 'OK', 'Error')
@@ -228,9 +247,8 @@ function Test-ForUpdate {
     try {
         Write-Log "Prüfe auf Updates..."
         $window.Dispatcher.Invoke([action]{}, 'Background')
-        # Timeout für Webanfrage setzen
         $webRequest = [System.Net.WebRequest]::Create($versionUrl)
-        $webRequest.Timeout = 5000 # 5 Sekunden Timeout
+        $webRequest.Timeout = 5000
         $response = $webRequest.GetResponse()
         $stream = $response.GetResponseStream()
         $reader = New-Object System.IO.StreamReader($stream)
@@ -243,19 +261,15 @@ function Test-ForUpdate {
             Write-Log "Neue Version gefunden: $remoteVersion (aktuell: $localVersion)"
             $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen?", "Update verfügbar", 'YesNo', 'Information')
             if ($result -eq 'Yes') {
-                # Ermittelt den Pfad des aktuell laufenden Scripts
                 if ($PSCommandPath) {
                     $scriptDir = Split-Path -Parent $PSCommandPath
                     $scriptPath = $PSCommandPath
-                }
-                elseif ($MyInvocation.MyCommand.Path) {
+                } elseif ($MyInvocation.MyCommand.Path) {
                     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
                     $scriptPath = $MyInvocation.MyCommand.Path
-                }
-                else {
+                } else {
                     throw 'Konnte den Skriptpfad nicht ermitteln.'
                 }
-                # Prüfe Schreibrechte im Scriptverzeichnis
                 $testFile = Join-Path $scriptDir "_write_test.tmp"
                 try {
                     Set-Content -Path $testFile -Value "test" -ErrorAction Stop
@@ -271,12 +285,8 @@ function Test-ForUpdate {
                 $window.Dispatcher.Invoke([action]{}, 'Background')
                 Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
                 Write-Log "Neue Version wurde als $newScriptPath gespeichert. Update-Vorgang wird vorbereitet."
-
-                # Zeige nach erfolgreichem Update einen Changelog-Link an (sofern vorhanden)
                 Write-Log "Update abgeschlossen. Changelog siehe: https://github.com/Zdministrator/DATEV-Toolbox/releases"
                 [System.Windows.MessageBox]::Show("Das Update wurde abgeschlossen.`nEine Übersicht der Änderungen finden Sie unter:`nhttps://github.com/Zdministrator/DATEV-Toolbox/releases", "Update abgeschlossen", 'OK', 'Information')
-
-                # Cleanup: Warte maximal 10 Sekunden auf das Beenden des Hauptscripts, dann fahre mit dem Update fort
                 $updateScript = @"
 Start-Sleep -Seconds 2
 $timeout = 10
@@ -286,74 +296,92 @@ while (Get-Process -Id $PID -ErrorAction SilentlyContinue) {
     $elapsed += 0.5
     if ($elapsed -ge $timeout) { break }
 }
-# Ersetzen
 Move-Item -Path '$newScriptPath' -Destination '$scriptPath' -Force
-# Neues Script starten
 Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File ""$scriptPath""'
-# Update-Script löschen
 Remove-Item -Path '$updateScriptPath' -Force
 "@
                 $updateScript = $updateScript -replace '\$PID', $PID
                 try {
                     Set-Content -Path $updateScriptPath -Value $updateScript -Encoding UTF8
                     Write-Log "Update-Script wurde erstellt: $updateScriptPath"
-                }
-                catch {
+                } catch {
                     Write-Log "Fehler beim Erstellen des Update-Scripts: $_"
                 }
                 [System.Windows.MessageBox]::Show("Das Programm wird für das Update beendet und automatisch neu gestartet.", "Update wird durchgeführt", 'OK', 'Information')
-                # Startet das Update-Script und beendet das Hauptscript
                 Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$updateScriptPath`"" -WindowStyle Hidden
                 exit
-            }
-            else {
+            } else {
                 Write-Log "Update abgebrochen durch Benutzer."
             }
-        }
-        else {
+        } else {
             Write-Log "Keine neue Version verfügbar."
         }
-    }
-    catch {
+    } catch {
         Write-Log "Fehler beim Update-Check: $($_.Exception.Message)"
         Write-ErrorLog "Fehler beim Update-Check: $($_.Exception.Message)"
         [System.Windows.MessageBox]::Show("Fehler beim Update-Check: $($_.Exception.Message)", "Update-Fehler", 'OK', 'Error')
     }
 }
+#endregion
 
-# Registriert einen Button für den Start eines lokalen DATEV-Programms
+#region Button- und Event-Handler-Registrierung
 function Register-ToolButton {
-    param (
-        [string]$ButtonVar,
-        [string]$ExePath,
-        [string]$ToolName
-    )
+    param ([string]$ButtonVar, [string]$ExePath, [string]$ToolName)
     $btn = $Controls[$ButtonVar]
     $exe = $ExePath
     $toolName = $ToolName
-
     if ([string]::IsNullOrWhiteSpace($exe) -or -not (Test-Path $exe)) {
         $btn.IsEnabled = $false
         $btn.ToolTip = "${toolName} nicht gefunden: $exe"
         Write-Log "$toolName nicht gefunden und Button deaktiviert: $exe"
         return
-    }
-    else {
+    } else {
         $btn.ToolTip = "$toolName starten"
     }
-
     $btn.Add_Click({
         try {
             Start-Process -FilePath $exe -ErrorAction Stop
             Write-LogDirect "$toolName gestartet: $exe"
-        }
-        catch {
+        } catch {
             Write-LogDirect "Fehler beim Start von ${toolName}: $($_.Exception.Message)"
         }
     }.GetNewClosure())
 }
+function Register-WebLinkHandler {
+    param ([System.Windows.Controls.Button]$Button, [string]$Name, [string]$Url)
+    $Button.Add_Click({
+        $btnContent = $Button.Content
+        Write-LogDirect "Öffne $btnContent..."
+        $reachable = $false
+        try {
+            $request = [System.Net.WebRequest]::Create($Url)
+            $request.Method = "HEAD"
+            $request.Timeout = 5000
+            $response = $request.GetResponse()
+            $response.Close()
+            $reachable = $true
+        } catch { $reachable = $false }
+        if (-not $reachable) {
+            Write-LogDirect "Keine Verbindung zu $Url möglich – $btnContent wird nicht geöffnet."
+            return
+        }
+        try {
+            Start-Process "explorer.exe" $Url
+            Write-LogDirect "$btnContent geöffnet."
+        } catch {
+            Write-LogDirect ("Fehler beim Öffnen von {0}: {1}" -f $btnContent, $_)
+        }
+    }.GetNewClosure())
+}
+function Register-ButtonAction {
+    param([Parameter(Mandatory)][System.Windows.Controls.Button]$Button, [Parameter(Mandatory)][scriptblock]$Action)
+    if ($Button) {
+        $Button.Add_Click($Action)
+    }
+}
+#endregion
 
-# Definiert die Zuordnung von Buttons zu lokalen Programmen
+#region Button- und Event-Handler-Zuordnung
 $toolButtons = @(
     @{ Button = "btnInstallationsmanager"; Exe = "$env:DATEVPP\PROGRAMM\INSTALL\DvInesInstMan.exe"; Name = "Installationsmanager" },
     @{ Button = "btnServicetool"; Exe = "$env:DATEVPP\PROGRAMM\SRVTOOL\Srvtool.exe"; Name = "Servicetool" },
@@ -363,50 +391,10 @@ $toolButtons = @(
     @{ Button = "btnArbeitsplatz"; Exe = "$env:DATEVPP\PROGRAMM\K0005000\Arbeitsplatz.exe"; Name = "DATEV-Arbeitsplatz" },
     @{ Button = "btnNgenAll40"; Exe = "$env:DATEVPP\Programm\B0001508\ngenall40.cmd"; Name = "NGENALL 4.0" }
 )
-
-# Registriert Event-Handler für alle Tool-Buttons
 foreach ($entry in $toolButtons) {
     Register-ToolButton -ButtonVar $entry.Button -ExePath $entry.Exe -ToolName $entry.Name
 }
 
-# Registriert einen Button für das Öffnen eines Weblinks
-function Register-WebLinkHandler {
-    param (
-        [System.Windows.Controls.Button]$Button,
-        [string]$Name,
-        [string]$Url
-    )
-    $Button.Add_Click({
-        $btnContent = $Button.Content
-        Write-LogDirect "Öffne $btnContent..."
-        # Webverbindung direkt im Handler prüfen (HEAD-Request)
-        $reachable = $false
-        try {
-            $request = [System.Net.WebRequest]::Create($Url)
-            $request.Method = "HEAD"
-            $request.Timeout = 5000
-            $response = $request.GetResponse()
-            $response.Close()
-            $reachable = $true
-        }
-        catch {
-            $reachable = $false
-        }
-        if (-not $reachable) {
-            Write-LogDirect "Keine Verbindung zu $Url möglich – $btnContent wird nicht geöffnet."
-            return
-        }
-        try {
-            Start-Process "explorer.exe" $Url
-            Write-LogDirect "$btnContent geöffnet."
-        }
-        catch {
-            Write-LogDirect ("Fehler beim Öffnen von {0}: {1}" -f $btnContent, $_)
-        }
-    }.GetNewClosure())
-}
-
-# Definiert die Zuordnung von Cloud-Buttons zu Weblinks
 $cloudButtons = @(
     @{ Name = "btnDATEVHilfeCenter"; Url = "https://apps.datev.de/help-center/" },
     @{ Name = "btnServicekontaktuebersicht"; Url = "https://apps.datev.de/servicekontakt-online/contacts" },
@@ -423,8 +411,6 @@ $cloudButtons = @(
     @{ Name = "btnDatevSmartDocs"; Url = "https://www.datev.de/web/de/service-und-support/software-bereitstellung/download-bereich/it-loesungen-und-security/datev-smartdocs-skripte-zur-analyse-oder-reparatur/" },
     @{ Name = "btnDatentraegerDownloadPortal"; Url = "https://www.datev.de/web/de/service-und-support/software-bereitstellung/datentraeger-portal/" }
 )
-
-# Registriert Event-Handler für alle Cloud/Weblink-Buttons
 foreach ($entry in $cloudButtons) {
     $btn = $Controls[$entry.Name]
     if ($btn) {
@@ -432,66 +418,6 @@ foreach ($entry in $cloudButtons) {
     }
 }
 
-# Gibt den Download-Ordner für die Toolbox zurück
-function Get-DownloadFolder {
-    $downloads = [Environment]::GetFolderPath('UserProfile')
-    $targetDir = Join-Path $downloads "Downloads"
-    $targetDir = Join-Path $targetDir "DATEV-Toolbox"
-    if (-not (Test-Path $targetDir)) {
-        New-Item -Path $targetDir -ItemType Directory | Out-Null
-    }
-    return $targetDir
-}
-
-# Lädt eine Datei von einer angegebenen URL in den Download-Ordner
-function Get-DatevFile {
-    param(
-        [string]$Url,
-        [string]$FileName
-    )
-    $targetDir = Get-DownloadFolder
-    $targetFile = Join-Path $targetDir $FileName
-    if (Test-Path $targetFile) {
-        $result = [System.Windows.MessageBox]::Show("Die Datei '$FileName' existiert bereits. Überschreiben?", "Datei existiert", 'YesNo', 'Warning')
-        if ($result -ne 'Yes') {
-            Write-Log "Download abgebrochen: $FileName existiert bereits."
-            return
-        }
-    }
-    try {
-        Write-Log "Lade $FileName herunter ..."
-        $window.Dispatcher.Invoke([action]{}, 'Background') # UI-Update erzwingen
-        # Timeout für Webanfrage setzen
-        $webRequest = [System.Net.WebRequest]::Create($Url)
-        $webRequest.Timeout = 10000 # 10 Sekunden Timeout
-        $response = $webRequest.GetResponse()
-        $stream = $response.GetResponseStream()
-        $fileStream = [System.IO.File]::Create($targetFile)
-        $stream.CopyTo($fileStream)
-        $fileStream.Close()
-        $stream.Close()
-        $response.Close()
-        Write-Log "Download abgeschlossen: $targetFile"
-        [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
-    }
-    catch {
-        Write-Log "Fehler beim Download: $($_.Exception.Message)"
-        [System.Windows.MessageBox]::Show("Fehler beim Download: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
-    }
-}
-
-# Registriert einen Button für eine beliebige Aktion (z. B. Download, Ordner öffnen)
-function Register-ButtonAction {
-    param(
-        [Parameter(Mandatory)][System.Windows.Controls.Button]$Button,
-        [Parameter(Mandatory)][scriptblock]$Action
-    )
-    if ($Button) {
-        $Button.Add_Click($Action)
-    }
-}
-
-# Registriert Event-Handler für alle Download-Buttons
 Register-ButtonAction -Button $Controls["btnDownloadSicherheitspaketCompact"] -Action {
     Get-DatevFile -Url "https://download.datev.de/download/sipacompact/sipacompact.exe" -FileName "sipacompact.exe"
 }
@@ -508,14 +434,12 @@ Register-ButtonAction -Button $Controls["btnDownloadDeinstallationsnacharbeiten"
     Get-DatevFile -Url "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" -FileName "deinstnacharbeitentool.exe"
 }
 
-# Registriert Event-Handler für das Öffnen des Download-Ordners
 Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
     $targetDir = Get-DownloadFolder
     Write-Log "Öffne Download-Ordner..."
     Start-Process explorer.exe $targetDir
 }
 
-# Registriert Event-Handler für den Leistungsindex-Button
 if ($global:Controls["btnLeistungsindex"]) {
     $exe = "$env:DATEVPP\PROGRAMM\RWAPPLIC\irw.exe"
     if (-not (Test-Path $exe)) {
@@ -530,14 +454,12 @@ if ($global:Controls["btnLeistungsindex"]) {
     }
 }
 
-# Registriert Event-Handler für den Button 'btnCheckUpdateSettings'
 if ($global:Controls["btnCheckUpdateSettings"]) {
     $global:Controls["btnCheckUpdateSettings"].Add_Click({
         Test-ForUpdate
     })
 }
 
-# Tooltips für alle Buttons ergänzen
 $Controls["btnArbeitsplatz"].ToolTip = "Startet den DATEV-Arbeitsplatz."
 $Controls["btnInstallationsmanager"].ToolTip = "Startet den DATEV-Installationsmanager."
 $Controls["btnServicetool"].ToolTip = "Startet das DATEV-Servicetool."
@@ -550,9 +472,7 @@ $Controls["btnDownloadBelegtransfer"].ToolTip = "Lädt Belegtransfer V. 5.46 her
 $Controls["btnDownloadServerprep"].ToolTip = "Lädt Serverprep herunter."
 $Controls["btnDownloadDeinstallationsnacharbeiten"].ToolTip = "Lädt das Deinstallationsnacharbeiten-Tool herunter."
 $Controls["btnCheckUpdateSettings"].ToolTip = "Prüft das Script auf Updates."
+#endregion
 
-# Prüft nach dem Laden des Fensters auf Updates
 Test-ForUpdate
-
-# Zeigt das Fenster an und startet die Event-Loop
 $window.ShowDialog() | Out-Null
