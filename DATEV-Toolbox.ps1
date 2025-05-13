@@ -115,6 +115,9 @@ function Write-ErrorLog($message) {
                 <TabItem Header="Downloads">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
+                            <Label Content="Downloads von externer Liste" FontWeight="Bold" Margin="5"/>
+                            <ComboBox Name="cmbDynamicDownloads" Margin="5" Width="300" />
+                            <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Margin="5" Width="150" />
                             <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
                             <Button Name="btnDatevSmartDocs" Content="DATEV Smart Docs" Height="30" Margin="5"/>
@@ -171,7 +174,7 @@ function Initialize-Controls {
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
         "btnDownloadSicherheitspaketCompact", "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
-        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "menuSettings", "btnCheckUpdateSettings"
+        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "menuSettings", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload"
     )
     foreach ($name in $controlNames) {
         $global:Controls[$name] = $window.FindName($name)
@@ -233,6 +236,43 @@ function Get-DatevFile {
     } catch {
         Write-Log "Fehler beim Download: $($_.Exception.Message)"
         [System.Windows.MessageBox]::Show("Fehler beim Download: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
+    }
+}
+#endregion
+
+#region Dynamische Download-Liste laden und Dropdown befüllen
+# Liest die Datei 'downloads.json' ein und befüllt das Dropdown im Download-Tab
+$dynamicDownloadsFile = Join-Path (Split-Path $PSCommandPath) 'downloads.json'
+$global:DynamicDownloads = @()
+if (Test-Path $dynamicDownloadsFile) {
+    try {
+        $global:DynamicDownloads = Get-Content $dynamicDownloadsFile | ConvertFrom-Json
+        $Controls["cmbDynamicDownloads"].Items.Clear()
+        foreach ($item in $global:DynamicDownloads) {
+            $Controls["cmbDynamicDownloads"].Items.Add($item.Name)
+        }
+        if ($Controls["cmbDynamicDownloads"].Items.Count -gt 0) {
+            $Controls["cmbDynamicDownloads"].SelectedIndex = 0
+        }
+    } catch {
+        Write-Log "Fehler beim Laden der Download-Liste: $($_.Exception.Message)"
+    }
+} else {
+    Write-Log "downloads.json nicht gefunden. Das Dropdown bleibt leer."
+}
+
+# Event-Handler für den Button 'Download starten' im dynamischen Bereich
+Register-ButtonAction -Button $Controls["btnStartDynamicDownload"] -Action {
+    $selIndex = $Controls["cmbDynamicDownloads"].SelectedIndex
+    if ($selIndex -lt 0 -or $selIndex -ge $global:DynamicDownloads.Count) {
+        [System.Windows.MessageBox]::Show("Bitte wählen Sie einen Download aus der Liste.", "Hinweis", 'OK', 'Information')
+        return
+    }
+    $entry = $global:DynamicDownloads[$selIndex]
+    if ($entry.Url -and $entry.Name) {
+        Get-DatevFile -Url $entry.Url -FileName ([System.IO.Path]::GetFileName($entry.Url))
+    } else {
+        [System.Windows.MessageBox]::Show("Ungültiger Eintrag in der Download-Liste.", "Fehler", 'OK', 'Error')
     }
 }
 #endregion
