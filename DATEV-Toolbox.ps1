@@ -205,6 +205,15 @@ function Compare-Version {
         return [string]::Compare($v1, $v2)
     }
 }
+
+function Update-DownloadListMetaDisplay {
+    param($downloadsMeta)
+    if ($downloadsMeta.Version -and $downloadsMeta.Datum) {
+        $Controls["txtDownloadListMeta"].Text = "Download-Liste Version: $($downloadsMeta.Version), Datum: $($downloadsMeta.Datum)"
+    } else {
+        $Controls["txtDownloadListMeta"].Text = "Download-Liste: keine Metadaten gefunden."
+    }
+}
 #endregion
 
 #region Download-Funktionen
@@ -265,12 +274,7 @@ if (Test-Path $dynamicDownloadsFile) {
         if ($Controls["cmbDynamicDownloads"].Items.Count -gt 0) {
             $Controls["cmbDynamicDownloads"].SelectedIndex = 0
         }
-        # Version und Datum im Tab Einstellungen anzeigen
-        if ($downloadsMeta.Version -and $downloadsMeta.Datum) {
-            $Controls["txtDownloadListMeta"].Text = "Download-Liste Version: $($downloadsMeta.Version), Datum: $($downloadsMeta.Datum)"
-        } else {
-            $Controls["txtDownloadListMeta"].Text = "Download-Liste: keine Metadaten gefunden."
-        }
+        Update-DownloadListMetaDisplay $downloadsMeta
     } catch {
         Write-Log "Fehler beim Laden der Download-Liste: $($_.Exception.Message)"
         $Controls["txtDownloadListMeta"].Text = "Fehler beim Laden der Download-Liste."
@@ -313,12 +317,7 @@ Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
         if ($Controls["cmbDynamicDownloads"].Items.Count -gt 0) {
             $Controls["cmbDynamicDownloads"].SelectedIndex = 0
         }
-        # Version und Datum im Tab Einstellungen anzeigen
-        if ($downloadsMeta.Version -and $downloadsMeta.Datum) {
-            $Controls["txtDownloadListMeta"].Text = "Download-Liste Version: $($downloadsMeta.Version), Datum: $($downloadsMeta.Datum)"
-        } else {
-            $Controls["txtDownloadListMeta"].Text = "Download-Liste: keine Metadaten gefunden."
-        }
+        Update-DownloadListMetaDisplay $downloadsMeta
     } catch {
         Write-Log "Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)"
         [System.Windows.MessageBox]::Show("Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
