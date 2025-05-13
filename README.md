@@ -72,7 +72,7 @@ Contributions are welcome! Please follow these steps:
 
 ## License
 
-Distributed under the GNU GPL v3. See `LICENSE` for more information.
+Distributed under MIT License. See `LICENSE` for more information.
 
 ## Contact
 
