@@ -117,6 +117,7 @@ function Write-ErrorLog($message) {
                         <StackPanel Orientation="Vertical" Margin="10">
                             <Label Content="Downloads von externer Liste" FontWeight="Bold" Margin="5"/>
                             <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="0,0,0,0" />
+                            <TextBlock Name="txtDownloadListMeta" FontSize="10" Foreground="Gray" Margin="5" HorizontalAlignment="Center" />
                             <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="0,10,0,0" />
                             <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
@@ -143,11 +144,11 @@ function Write-ErrorLog($message) {
                 <TabItem Header="Einstellungen">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
-                            <TextBlock Text='Einstellungen (Platzhalter)' FontWeight='Bold' FontSize='14' Margin='0,0,0,10'/>
-                            <TextBlock Text='Hier können Einstellungen ergänzt werden.' />
+                            <Label Content="Update Funktionen" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" />
                             <Button Name="btnUpdateDownloadList" Content="Update Download-Liste von Github" Height="30" Margin="5" />
-                            <TextBlock Name="txtDownloadListMeta" FontSize="10" Foreground="Gray" Margin="0,10,0,0" />
+                            <Label Content="Einstellungen" FontWeight="Bold" Margin="5"/>
+                            <TextBlock Text='Hier können weitere Einstellungen ergänzt werden.' />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
