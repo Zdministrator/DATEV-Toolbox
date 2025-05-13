@@ -72,6 +72,7 @@ function Write-ErrorLog($message) {
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="100" />
+                <RowDefinition Height="Auto" /> <!-- Fußzeile -->
             </Grid.RowDefinitions>
             <TabControl Grid.Row="0" Margin="0,0,0,0" VerticalAlignment="Stretch">
                 <TabItem Header="DATEV Tools">
@@ -147,6 +148,7 @@ function Write-ErrorLog($message) {
                 </TabItem>
             </TabControl>
             <TextBox Name="txtLog" Grid.Row="2" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0" TextWrapping="Wrap" FontSize="11" />
+            <TextBlock Grid.Row="3" Text="Norman Zamponi | HEES GmbH | © 2025" HorizontalAlignment="Center" FontSize="11" Foreground="Gray" Margin="0,5,0,0" />
         </Grid>
     </DockPanel>
 </Window>
