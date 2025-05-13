@@ -116,8 +116,8 @@ function Write-ErrorLog($message) {
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
                             <Label Content="Downloads von externer Liste" FontWeight="Bold" Margin="5"/>
-                            <ComboBox Name="cmbDynamicDownloads" Margin="5" Width="300" />
-                            <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Margin="5" Width="150" />
+                            <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="0,0,0,0" />
+                            <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="0,10,0,0" />
                             <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
                             <Button Name="btnDatevSmartDocs" Content="DATEV Smart Docs" Height="30" Margin="5"/>
@@ -145,7 +145,9 @@ function Write-ErrorLog($message) {
                         <StackPanel Orientation="Vertical" Margin="10">
                             <TextBlock Text='Einstellungen (Platzhalter)' FontWeight='Bold' FontSize='14' Margin='0,0,0,10'/>
                             <TextBlock Text='Hier können Einstellungen ergänzt werden.' />
-                            <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="0,20,0,0" />
+                            <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" />
+                            <Button Name="btnUpdateDownloadList" Content="Update Download-Liste von Github" Height="30" Margin="5" />
+                            <TextBlock Name="txtDownloadListMeta" FontSize="10" Foreground="Gray" Margin="0,10,0,0" />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -174,7 +176,7 @@ function Initialize-Controls {
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
         "btnDownloadSicherheitspaketCompact", "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
-        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "menuSettings", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload"
+        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "menuSettings", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta"
     )
     foreach ($name in $controlNames) {
         $global:Controls[$name] = $window.FindName($name)
@@ -246,7 +248,8 @@ $dynamicDownloadsFile = Join-Path (Split-Path $PSCommandPath) 'downloads.json'
 $global:DynamicDownloads = @()
 if (Test-Path $dynamicDownloadsFile) {
     try {
-        $global:DynamicDownloads = Get-Content $dynamicDownloadsFile | ConvertFrom-Json
+        $downloadsMeta = Get-Content $dynamicDownloadsFile | ConvertFrom-Json
+        $global:DynamicDownloads = $downloadsMeta.Downloads
         $Controls["cmbDynamicDownloads"].Items.Clear()
         foreach ($item in $global:DynamicDownloads) {
             $Controls["cmbDynamicDownloads"].Items.Add($item.Name)
@@ -254,11 +257,19 @@ if (Test-Path $dynamicDownloadsFile) {
         if ($Controls["cmbDynamicDownloads"].Items.Count -gt 0) {
             $Controls["cmbDynamicDownloads"].SelectedIndex = 0
         }
+        # Version und Datum im Tab Einstellungen anzeigen
+        if ($downloadsMeta.Version -and $downloadsMeta.Datum) {
+            $Controls["txtDownloadListMeta"].Text = "Download-Liste Version: $($downloadsMeta.Version), Datum: $($downloadsMeta.Datum)"
+        } else {
+            $Controls["txtDownloadListMeta"].Text = "Download-Liste: keine Metadaten gefunden."
+        }
     } catch {
         Write-Log "Fehler beim Laden der Download-Liste: $($_.Exception.Message)"
+        $Controls["txtDownloadListMeta"].Text = "Fehler beim Laden der Download-Liste."
     }
 } else {
     Write-Log "downloads.json nicht gefunden. Das Dropdown bleibt leer."
+    $Controls["txtDownloadListMeta"].Text = "downloads.json nicht gefunden."
 }
 
 # Event-Handler für den Button 'Download starten' im dynamischen Bereich
@@ -273,6 +284,37 @@ Register-ButtonAction -Button $Controls["btnStartDynamicDownload"] -Action {
         Get-DatevFile -Url $entry.Url -FileName ([System.IO.Path]::GetFileName($entry.Url))
     } else {
         [System.Windows.MessageBox]::Show("Ungültiger Eintrag in der Download-Liste.", "Fehler", 'OK', 'Error')
+    }
+}
+
+# Event-Handler für den Button 'Download-Liste aktualisieren'
+Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
+    $onlineUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/refs/heads/main/downloads.json"
+    try {
+        Write-Log "Lade aktuelle Download-Liste von $onlineUrl ..."
+        $window.Dispatcher.Invoke([action]{}, 'Background')
+        Invoke-WebRequest -Uri $onlineUrl -OutFile $dynamicDownloadsFile -UseBasicParsing
+        Write-Log "Download-Liste erfolgreich heruntergeladen und gespeichert."
+        # Nach dem Download die Liste neu laden und Dropdown aktualisieren
+        $downloadsMeta = Get-Content $dynamicDownloadsFile | ConvertFrom-Json
+        $global:DynamicDownloads = $downloadsMeta.Downloads
+        $Controls["cmbDynamicDownloads"].Items.Clear()
+        foreach ($item in $global:DynamicDownloads) {
+            $Controls["cmbDynamicDownloads"].Items.Add($item.Name)
+        }
+        if ($Controls["cmbDynamicDownloads"].Items.Count -gt 0) {
+            $Controls["cmbDynamicDownloads"].SelectedIndex = 0
+        }
+        # Version und Datum im Tab Einstellungen anzeigen
+        if ($downloadsMeta.Version -and $downloadsMeta.Datum) {
+            $Controls["txtDownloadListMeta"].Text = "Download-Liste Version: $($downloadsMeta.Version), Datum: $($downloadsMeta.Datum)"
+        } else {
+            $Controls["txtDownloadListMeta"].Text = "Download-Liste: keine Metadaten gefunden."
+        }
+    } catch {
+        Write-Log "Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)"
+        [System.Windows.MessageBox]::Show("Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
+        $Controls["txtDownloadListMeta"].Text = "Fehler beim Herunterladen der Download-Liste."
     }
 }
 #endregion
