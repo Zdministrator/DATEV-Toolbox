@@ -56,6 +56,13 @@ function Write-ErrorLog($message) {
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     Add-Content -Path $logPath -Value "[$timestamp] $message"
 }
+
+function Register-ButtonAction {
+    param([Parameter(Mandatory)][System.Windows.Controls.Button]$Button, [Parameter(Mandatory)][scriptblock]$Action)
+    if ($Button) {
+        $Button.Add_Click($Action)
+    }
+}
 #endregion
 
 #region UI-Initialisierung
@@ -146,7 +153,7 @@ function Write-ErrorLog($message) {
                         <StackPanel Orientation="Vertical" Margin="10">
                             <Label Content="Update Funktionen" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" />
-                            <Button Name="btnUpdateDownloadList" Content="Update Download-Liste von Github" Height="30" Margin="5" />
+                            <Button Name="btnUpdateDownloadList" Content="Download-Liste aktualisieren" Height="30" Margin="5" />
                             <Label Content="Einstellungen" FontWeight="Bold" Margin="5"/>
                             <TextBlock Text='Hier können weitere Einstellungen ergänzt werden.' />
                         </StackPanel>
@@ -161,7 +168,7 @@ function Write-ErrorLog($message) {
 "@
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
-$localVersion = "1.0.8"
+$localVersion = "1.0.9"
 $window.Title = "DATEV Toolbox v$localVersion"
 #endregion
 
@@ -464,12 +471,6 @@ function Register-WebLinkHandler {
             Write-LogDirect ("Fehler beim Öffnen von {0}: {1}" -f $btnContent, $_)
         }
     }.GetNewClosure())
-}
-function Register-ButtonAction {
-    param([Parameter(Mandatory)][System.Windows.Controls.Button]$Button, [Parameter(Mandatory)][scriptblock]$Action)
-    if ($Button) {
-        $Button.Add_Click($Action)
-    }
 }
 #endregion
 
