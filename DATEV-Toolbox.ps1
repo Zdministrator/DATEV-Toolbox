@@ -1,4 +1,17 @@
-﻿[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+﻿# Administratorrechte prüfen und ggf. Skript neu starten
+$IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $IsAdmin) {
+    Add-Type -AssemblyName PresentationFramework
+    [System.Windows.MessageBox]::Show("Dieses Skript benötigt Administratorrechte. Es wird jetzt mit erhöhten Rechten neu gestartet.", "Administratorrechte erforderlich", 'OK', 'Warning')
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = 'powershell.exe'
+    $psi.Arguments = "-ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    $psi.Verb = 'runas'
+    [System.Diagnostics.Process]::Start($psi) | Out-Null
+    exit
+}
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 Add-Type -AssemblyName PresentationFramework
 
@@ -261,7 +274,7 @@ function Test-ForUpdate {
 
                 # Zeige nach erfolgreichem Update einen Changelog-Link an (sofern vorhanden)
                 Write-Log "Update abgeschlossen. Changelog siehe: https://github.com/Zdministrator/DATEV-Toolbox/releases"
-                [System.Windows.MessageBox]::Show("Das Update wurde abgeschlossen. Eine Übersicht der Änderungen finden Sie unter:https://github.com/Zdministrator/DATEV-Toolbox/releases", "Update abgeschlossen", 'OK', 'Information')
+                [System.Windows.MessageBox]::Show("Das Update wurde abgeschlossen.`nEine Übersicht der Änderungen finden Sie unter:`nhttps://github.com/Zdministrator/DATEV-Toolbox/releases", "Update abgeschlossen", 'OK', 'Information')
 
                 # Cleanup: Warte maximal 10 Sekunden auf das Beenden des Hauptscripts, dann fahre mit dem Update fort
                 $updateScript = @"
