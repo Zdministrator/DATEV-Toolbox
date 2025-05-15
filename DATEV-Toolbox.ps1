@@ -65,6 +65,43 @@ function Register-ButtonAction {
 }
 #endregion
 
+#region Settings-Funktionen
+# Funktionen zum Laden und Speichern von Einstellungen im Benutzerprofil
+function Get-SettingsFilePath {
+    $settingsDir = Join-Path $env:APPDATA 'DATEV-Toolbox'
+    if (-not (Test-Path $settingsDir)) {
+        New-Item -Path $settingsDir -ItemType Directory | Out-Null
+    }
+    return (Join-Path $settingsDir 'settings.json')
+}
+function Load-Settings {
+    $settingsFile = Get-SettingsFilePath
+    if (Test-Path $settingsFile) {
+        try {
+            $global:Settings = Get-Content $settingsFile | ConvertFrom-Json
+            Write-Log "Einstellungen geladen aus $settingsFile."
+        } catch {
+            $global:Settings = @{}
+            Write-Log "Fehler beim Laden der Einstellungen. Verwende Standardwerte."
+        }
+    } else {
+        $global:Settings = @{}
+        Write-Log "Keine Einstellungen gefunden. Verwende Standardwerte."
+    }
+}
+function Save-Settings {
+    $settingsFile = Get-SettingsFilePath
+    try {
+        $global:Settings | ConvertTo-Json -Depth 5 | Set-Content $settingsFile -Encoding UTF8
+        Write-Log "Einstellungen gespeichert nach $settingsFile."
+    } catch {
+        Write-Log "Fehler beim Speichern der Einstellungen: $($_.Exception.Message)"
+    }
+}
+#endregion
+
+Load-Settings
+
 #region UI-Initialisierung
 # Lädt das XAML-Layout für das Hauptfenster und initialisiert das WPF-Fensterobjekt.
 [xml]$xaml = @"
@@ -261,7 +298,7 @@ function Get-DatevFile {
 
 #region Dynamische Download-Liste laden und Dropdown befüllen
 # Liest die Datei 'downloads.json' ein und befüllt das Dropdown im Download-Tab
-$dynamicDownloadsFile = Join-Path (Split-Path $PSCommandPath) 'downloads.json'
+$dynamicDownloadsFile = Join-Path (Join-Path $env:APPDATA 'DATEV-Toolbox') 'downloads.json'
 $global:DynamicDownloads = @()
 if (Test-Path $dynamicDownloadsFile) {
     try {
@@ -333,8 +370,12 @@ $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main
 function Test-ForUpdate {
     $testConnection = $false
     try {
-        $ping = Test-Connection -ComputerName "www.google.com" -Count 1 -Quiet -ErrorAction Stop
-        if ($ping) { $testConnection = $true }
+        $request = [System.Net.WebRequest]::Create($versionUrl)
+        $request.Method = "HEAD"
+        $request.Timeout = 3000
+        $response = $request.GetResponse()
+        if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 0) { $testConnection = $true }
+        $response.Close()
     } catch { $testConnection = $false }
     if (-not $testConnection) {
         Write-Log "Keine Internetverbindung. Update-Check abgebrochen."
@@ -570,3 +611,4 @@ $Controls["btnCheckUpdateSettings"].ToolTip = "Prüft das Script auf Updates."
 # Startet die automatische Update-Prüfung und zeigt das Hauptfenster an.
 Test-ForUpdate
 $window.ShowDialog() | Out-Null
+Save-Settings
