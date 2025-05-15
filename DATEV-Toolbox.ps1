@@ -222,7 +222,7 @@ Load-Settings
 "@
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
-$localVersion = "1.0.9"
+$localVersion = "1.0.10"
 $window.Title = "DATEV Toolbox v$localVersion"
 #endregion
 
