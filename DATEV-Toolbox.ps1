@@ -87,8 +87,11 @@ function Load-Settings {
     $settingsFile = Get-SettingsFilePath
     if (Test-Path $settingsFile) {
         try {
-            $global:Settings = Get-Content $settingsFile | ConvertFrom-Json
-            if (-not $global:Settings) { $global:Settings = @{} }
+            $raw = Get-Content $settingsFile -Raw | ConvertFrom-Json
+            $global:Settings = @{}
+            foreach ($p in $raw.PSObject.Properties) {
+                $global:Settings[$p.Name] = $p.Value
+            }
             # Fehlende Keys ergänzen
             foreach ($key in $defaultSettings.Keys) {
                 if (-not $global:Settings.ContainsKey($key)) {
@@ -98,7 +101,7 @@ function Load-Settings {
             Write-Log "Einstellungen geladen aus $settingsFile."
         } catch {
             $global:Settings = $defaultSettings.Clone()
-            Write-Log "Fehler beim Laden der Einstellungen. Verwende Standardwerte." -IsError
+            Write-Log "Fehler beim Laden der Einstellungen. Verwende Standardwerte. Fehlerdetails: $($_.Exception.Message) | Datei: $settingsFile | Inhalt: $(Get-Content $settingsFile -Raw)" -IsError
         }
     } else {
         $global:Settings = $defaultSettings.Clone()
@@ -238,10 +241,14 @@ function Initialize-Controls {
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
         "btnDownloadSicherheitspaketCompact", "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
-        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "menuSettings", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta"
+        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta"
     )
     foreach ($name in $controlNames) {
-        $global:Controls[$name] = $window.FindName($name)
+        $ctrl = $window.FindName($name)
+        $global:Controls[$name] = $ctrl
+        if (-not $ctrl) {
+            Write-Log "Warnung: Control '$name' wurde im XAML nicht gefunden." -IsError
+        }
     }
 }
 Initialize-Controls
@@ -293,23 +300,27 @@ function Get-DatevFile {
             return
         }
     }
+    $response = $null
+    $stream = $null
+    $fileStream = $null
     try {
         Write-Log "Lade $FileName herunter ..."
         $window.Dispatcher.Invoke([action]{}, 'Background')
         $webRequest = [System.Net.WebRequest]::Create($Url)
-        $webRequest.Timeout = 10000
+        $webRequest.Timeout = 60000  # 60 Sekunden
         $response = $webRequest.GetResponse()
         $stream = $response.GetResponseStream()
         $fileStream = [System.IO.File]::Create($targetFile)
         $stream.CopyTo($fileStream)
-        $fileStream.Close()
-        $stream.Close()
-        $response.Close()
         Write-Log "Download abgeschlossen: $targetFile"
         [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
     } catch {
         Write-Log "Fehler beim Download: $($_.Exception.Message)" -IsError
         [System.Windows.MessageBox]::Show("Fehler beim Download: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
+    } finally {
+        if ($fileStream) { $fileStream.Close() }
+        if ($stream) { $stream.Close() }
+        if ($response) { $response.Close() }
     }
 }
 #endregion
