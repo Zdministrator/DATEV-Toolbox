@@ -27,15 +27,20 @@ $consolePtr = [Console.Win]::GetConsoleWindow()
 #region Logging-Funktionen
 # Funktionen für die Protokollierung von Aktionen und Fehlern im Log-Feld und in einer Datei.
 function Write-Log {
-    param([string]$message)
+    param(
+        [string]$message,
+        [switch]$IsError
+    )
     $timestamp = Get-Date -Format 'HH:mm:ss'
     try {
         if ($null -ne $global:Controls["txtLog"]) {
             $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
             $global:Controls["txtLog"].ScrollToEnd()
         }
+        if ($IsError) { Write-ErrorLog $message }
     } catch {}
 }
+
 function Write-LogDirect {
     param([string]$message)
     $timestamp = Get-Date -Format 'HH:mm:ss'
@@ -44,14 +49,11 @@ function Write-LogDirect {
         $global:Controls["txtLog"].ScrollToEnd()
     }
 }
-function Write-ErrorLog($message) {
-    if ($PSCommandPath) {
-        $logDir = Split-Path -Parent $PSCommandPath
-    } elseif ($MyInvocation.MyCommand.Path) {
-        $logDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-    } else {
-        $logDir = $PSScriptRoot
-    }
+
+function Write-ErrorLog {
+    param([string]$message)
+    $settingsFile = Get-SettingsFilePath
+    $logDir = Split-Path -Parent $settingsFile
     $logPath = Join-Path $logDir 'DATEV-Toolbox-Fehler.log'
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     Add-Content -Path $logPath -Value "[$timestamp] $message"
@@ -66,7 +68,13 @@ function Register-ButtonAction {
 #endregion
 
 #region Settings-Funktionen
-# Funktionen zum Laden und Speichern von Einstellungen im Benutzerprofil
+# Standardwerte für Einstellungen zentral definieren
+$defaultSettings = @{
+    # Beispiel-Keys, nach Bedarf anpassen/erweitern
+    "Sprache" = "de"
+    # ...weitere Standardwerte...
+}
+
 function Get-SettingsFilePath {
     $settingsDir = Join-Path $env:APPDATA 'DATEV-Toolbox'
     if (-not (Test-Path $settingsDir)) {
@@ -74,28 +82,38 @@ function Get-SettingsFilePath {
     }
     return (Join-Path $settingsDir 'settings.json')
 }
+
 function Load-Settings {
     $settingsFile = Get-SettingsFilePath
     if (Test-Path $settingsFile) {
         try {
             $global:Settings = Get-Content $settingsFile | ConvertFrom-Json
+            if (-not $global:Settings) { $global:Settings = @{} }
+            # Fehlende Keys ergänzen
+            foreach ($key in $defaultSettings.Keys) {
+                if (-not $global:Settings.ContainsKey($key)) {
+                    $global:Settings[$key] = $defaultSettings[$key]
+                }
+            }
             Write-Log "Einstellungen geladen aus $settingsFile."
         } catch {
-            $global:Settings = @{}
-            Write-Log "Fehler beim Laden der Einstellungen. Verwende Standardwerte."
+            $global:Settings = $defaultSettings.Clone()
+            Write-Log "Fehler beim Laden der Einstellungen. Verwende Standardwerte." -IsError
         }
     } else {
-        $global:Settings = @{}
+        $global:Settings = $defaultSettings.Clone()
         Write-Log "Keine Einstellungen gefunden. Verwende Standardwerte."
     }
 }
+
 function Save-Settings {
     $settingsFile = Get-SettingsFilePath
     try {
+        if (-not $global:Settings) { $global:Settings = $defaultSettings.Clone() }
         $global:Settings | ConvertTo-Json -Depth 5 | Set-Content $settingsFile -Encoding UTF8
         Write-Log "Einstellungen gespeichert nach $settingsFile."
     } catch {
-        Write-Log "Fehler beim Speichern der Einstellungen: $($_.Exception.Message)"
+        Write-Log "Fehler beim Speichern der Einstellungen: $($_.Exception.Message)" -IsError
     }
 }
 #endregion
@@ -192,7 +210,6 @@ Load-Settings
                             <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" />
                             <Button Name="btnUpdateDownloadList" Content="Download-Liste aktualisieren" Height="30" Margin="5" />
                             <Label Content="Einstellungen" FontWeight="Bold" Margin="5"/>
-                            <TextBlock Text='Hier können weitere Einstellungen ergänzt werden.' />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -264,6 +281,7 @@ function Get-DownloadFolder {
     }
     return $targetDir
 }
+
 function Get-DatevFile {
     param([string]$Url, [string]$FileName)
     $targetDir = Get-DownloadFolder
@@ -290,7 +308,7 @@ function Get-DatevFile {
         Write-Log "Download abgeschlossen: $targetFile"
         [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
     } catch {
-        Write-Log "Fehler beim Download: $($_.Exception.Message)"
+        Write-Log "Fehler beim Download: $($_.Exception.Message)" -IsError
         [System.Windows.MessageBox]::Show("Fehler beim Download: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
     }
 }
@@ -313,7 +331,7 @@ if (Test-Path $dynamicDownloadsFile) {
         }
         Update-DownloadListMetaDisplay $downloadsMeta
     } catch {
-        Write-Log "Fehler beim Laden der Download-Liste: $($_.Exception.Message)"
+        Write-Log "Fehler beim Laden der Download-Liste: $($_.Exception.Message)" -IsError
         $Controls["txtDownloadListMeta"].Text = "Fehler beim Laden der Download-Liste."
     }
 } else {
@@ -356,7 +374,7 @@ Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
         }
         Update-DownloadListMetaDisplay $downloadsMeta
     } catch {
-        Write-Log "Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)"
+        Write-Log "Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)" -IsError
         [System.Windows.MessageBox]::Show("Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
         $Controls["txtDownloadListMeta"].Text = "Fehler beim Herunterladen der Download-Liste."
     }
@@ -413,7 +431,7 @@ function Test-ForUpdate {
                     Set-Content -Path $testFile -Value "test" -ErrorAction Stop
                     Remove-Item -Path $testFile -Force -ErrorAction SilentlyContinue
                 } catch {
-                    Write-Log "Keine Schreibrechte im Scriptverzeichnis: $scriptDir"
+                    Write-Log "Keine Schreibrechte im Scriptverzeichnis: $scriptDir" -IsError
                     [System.Windows.MessageBox]::Show("Das Update kann nicht durchgeführt werden, da keine Schreibrechte im Scriptverzeichnis ($scriptDir) bestehen.", "Update-Fehler", 'OK', 'Error')
                     return
                 }
@@ -443,7 +461,7 @@ Remove-Item -Path '$updateScriptPath' -Force
                     Set-Content -Path $updateScriptPath -Value $updateScript -Encoding UTF8
                     Write-Log "Update-Script wurde erstellt: $updateScriptPath"
                 } catch {
-                    Write-Log "Fehler beim Erstellen des Update-Scripts: $_"
+                    Write-Log "Fehler beim Erstellen des Update-Scripts: $_" -IsError
                 }
                 [System.Windows.MessageBox]::Show("Das Programm wird für das Update beendet und automatisch neu gestartet.", "Update wird durchgeführt", 'OK', 'Information')
                 Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$updateScriptPath`"" -WindowStyle Hidden
@@ -455,7 +473,7 @@ Remove-Item -Path '$updateScriptPath' -Force
             Write-Log "Keine neue Version verfügbar."
         }
     } catch {
-        Write-Log "Fehler beim Update-Check: $($_.Exception.Message)"
+        Write-Log "Fehler beim Update-Check: $($_.Exception.Message)" -IsError
         Write-ErrorLog "Fehler beim Update-Check: $($_.Exception.Message)"
         [System.Windows.MessageBox]::Show("Fehler beim Update-Check: $($_.Exception.Message)", "Update-Fehler", 'OK', 'Error')
     }
@@ -486,6 +504,7 @@ function Register-ToolButton {
         }
     }.GetNewClosure())
 }
+
 function Register-WebLinkHandler {
     param ([System.Windows.Controls.Button]$Button, [string]$Name, [string]$Url)
     $Button.Add_Click({
@@ -551,19 +570,24 @@ foreach ($entry in $cloudButtons) {
         Register-WebLinkHandler -Button $btn -Name $entry.Name -Url $entry.Url
     }
 }
+#endregion
 
 Register-ButtonAction -Button $Controls["btnDownloadSicherheitspaketCompact"] -Action {
     Get-DatevFile -Url "https://download.datev.de/download/sipacompact/sipacompact.exe" -FileName "sipacompact.exe"
 }
+
 Register-ButtonAction -Button $Controls["btnDownloadFernbetreuungOnline"] -Action {
     Get-DatevFile -Url "https://download.datev.de/download/fbo-kp/datev_fernbetreuung_online.exe" -FileName "datev_fernbetreuung_online.exe"
 }
+
 Register-ButtonAction -Button $Controls["btnDownloadBelegtransfer"] -Action {
     Get-DatevFile -Url "https://download.datev.de/download/bedi/belegtransfer546.exe" -FileName "belegtransfer546.exe"
 }
+
 Register-ButtonAction -Button $Controls["btnDownloadServerprep"] -Action {
     Get-DatevFile -Url "https://download.datev.de/download/datevitfix/serverprep.exe" -FileName "serverprep.exe"
 }
+
 Register-ButtonAction -Button $Controls["btnDownloadDeinstallationsnacharbeiten"] -Action {
     Get-DatevFile -Url "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" -FileName "deinstnacharbeitentool.exe"
 }
