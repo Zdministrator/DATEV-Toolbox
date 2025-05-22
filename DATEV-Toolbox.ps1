@@ -148,16 +148,16 @@ Load-Settings
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
                             <Label Content="Programme" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5"/>
-                            <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5"/>
-                            <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5"/>
+                            <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5" ToolTip="Startet den DATEV-Arbeitsplatz."/>
+                            <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5" ToolTip="Startet den DATEV-Installationsmanager."/>
+                            <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5" ToolTip="Startet das DATEV-Servicetool."/>
                             <Label Content="Tools" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5"/>
-                            <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5"/>
-                            <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5"/>
+                            <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5" ToolTip="Startet die KonfigDB-Tools."/>
+                            <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5" ToolTip="Startet die EODBconfig."/>
+                            <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5" ToolTip="Startet die EO Aufgabenplanung."/>
                             <Label Content="Performance" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnNgenAll40" Content="Native Images erzwingen" Height="30" Margin="5" />
-                            <Button Name="btnLeistungsindex" Content="Leistungsindex" Height="30" Margin="5" />
+                            <Button Name="btnNgenAll40" Content="Native Images erzwingen" Height="30" Margin="5" ToolTip="Erzwingt die Erstellung von .NET Native Images (ngenall40)."/>
+                            <Button Name="btnLeistungsindex" Content="Leistungsindex" Height="30" Margin="5" ToolTip="Startet den Leistungsindex."/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -165,39 +165,33 @@ Load-Settings
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
                             <Label Content="Hilfe und Support" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5"/>
-                            <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5"/>
+                            <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5" ToolTip="Öffnet das DATEV Hilfe Center (Web)."/>
+                            <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5" ToolTip="Öffnet die Servicekontaktübersicht (Web)."/>
                             <Label Content="Cloud" FontWeight="Bold" Margin="5"/>                    
-                            <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5"/>
-                            <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5"/>
-                            <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5"/>
-                            <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5"/>
-                            <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5"/>
-                            <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5"/>
+                            <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5" ToolTip="Öffnet das MyDATEV Portal (Web)."/>
+                            <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5" ToolTip="Öffnet DATEV Unternehmen Online (Web)."/>
+                            <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5" ToolTip="Öffnet Logistikauftrag Online (Web)."/>
+                            <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5" ToolTip="Öffnet die Lizenzverwaltung Online (Web)."/>
+                            <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5" ToolTip="Öffnet den DATEV Rechteraum online (Web)."/>
+                            <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5" ToolTip="Öffnet die DATEV Rechteverwaltung online (Web)."/>
                             <Label Content="Verwaltung und Technik" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5"/>
-                            <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5"/>
-                            <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5"/>
+                            <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5" ToolTip="Öffnet die SmartLogin Administration (Web)."/>
+                            <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5" ToolTip="Öffnet das MyDATEV Bestandsmanagement (Web)."/>
+                            <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5" ToolTip="Zeigt weitere DATEV Cloud-Anwendungen (Web)."/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
                 <TabItem Header="Downloads">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
-                            <Label Content="Downloads von externer Liste" FontWeight="Bold" Margin="5"/>
-                            <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="0,0,0,0" />
+                            <Label Content="Direkt Downloads von Liste:" FontWeight="Bold" Margin="5"/>
+                            <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="0,0,0,0" ToolTip="Wählen Sie einen Eintrag für den Direkt-Download."/>
                             <TextBlock Name="txtDownloadListMeta" FontSize="10" Foreground="Gray" Margin="5" HorizontalAlignment="Center" />
-                            <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="0,10,0,0" />
+                            <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="0,10,0,0" ToolTip="Startet den Download des gewählten Eintrags."/>
                             <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5"/>
-                            <Button Name="btnDatevSmartDocs" Content="DATEV Smart Docs" Height="30" Margin="5"/>
-                            <Button Name="btnDatentraegerDownloadPortal" Content="Datenträger Download Portal" Height="30" Margin="5"/>
-                            <Label Content="Direkt Downloads" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnDownloadSicherheitspaketCompact" Content="Sicherheitspaket compact" Height="30" Margin="5"/>
-                            <Button Name="btnDownloadFernbetreuungOnline" Content="Fernbetreuung Online" Height="30" Margin="5"/>
-                            <Button Name="btnDownloadBelegtransfer" Content="Belegtransfer V. 5.46" Height="30" Margin="5"/>
-                            <Button Name="btnDownloadServerprep" Content="Serverprep" Height="30" Margin="5"/>
-                            <Button Name="btnDownloadDeinstallationsnacharbeiten" Content="Deinstallationsnacharbeiten" Height="30" Margin="5"/>
+                            <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5" ToolTip="Öffnet den offiziellen DATEV Downloadbereich (Web)."/>
+                            <Button Name="btnDatevSmartDocs" Content="DATEV Smart Docs" Height="30" Margin="5" ToolTip="Öffnet die DATEV Smart Docs Downloadseite (Web)."/>
+                            <Button Name="btnDatentraegerDownloadPortal" Content="Datenträger Download Portal" Height="30" Margin="5" ToolTip="Öffnet das Datenträger Download Portal (Web)."/>
                             <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
                                 <Button.Content>
                                     <Viewbox Width="24" Height="24">
@@ -214,8 +208,8 @@ Load-Settings
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
                             <Label Content="Update Funktionen" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" />
-                            <Button Name="btnUpdateDownloadList" Content="Download-Liste aktualisieren" Height="30" Margin="5" />
+                            <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" ToolTip="Prüft das Script auf Updates."/>
+                            <Button Name="btnUpdateDownloadList" Content="Download-Liste aktualisieren" Height="30" Margin="5" ToolTip="Lädt die aktuelle Download-Liste von GitHub."/>
                             <Label Content="Einstellungen" FontWeight="Bold" Margin="5"/>
                         </StackPanel>
                     </ScrollViewer>
@@ -229,9 +223,14 @@ Load-Settings
 "@
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
-$localVersion = "1.0.10"
+#endregion
+
+#region Version und Titel
+# Definiert die lokale Version des Skripts und setzt den Fenstertitel.
+$localVersion = "1.0.11"
 $window.Title = "DATEV Toolbox v$localVersion"
 #endregion
+
 
 #region Controls-Initialisierung
 # Sammelt alle relevanten UI-Controls in einer Hashtable für den globalen Zugriff.
@@ -244,7 +243,6 @@ function Initialize-Controls {
         "btnDATEVHilfeCenter", "btnServicekontaktuebersicht", "btnMyDATEVPortal", "btnDATEVUnternehmenOnline", "btnLogistikauftragOnline",
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
-        "btnDownloadSicherheitspaketCompact", "btnDownloadFernbetreuungOnline", "btnDownloadBelegtransfer", "btnDownloadServerprep", "btnDownloadDeinstallationsnacharbeiten",
         "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta"
     )
     foreach ($name in $controlNames) {
@@ -605,27 +603,6 @@ foreach ($entry in $cloudButtons) {
         Register-WebLinkHandler -Button $btn -Name $entry.Name -Url $entry.Url
     }
 }
-#endregion
-
-Register-ButtonAction -Button $Controls["btnDownloadSicherheitspaketCompact"] -Action {
-    Get-DatevFile -Url "https://download.datev.de/download/sipacompact/sipacompact.exe" -FileName "sipacompact.exe"
-}
-
-Register-ButtonAction -Button $Controls["btnDownloadFernbetreuungOnline"] -Action {
-    Get-DatevFile -Url "https://download.datev.de/download/fbo-kp/datev_fernbetreuung_online.exe" -FileName "datev_fernbetreuung_online.exe"
-}
-
-Register-ButtonAction -Button $Controls["btnDownloadBelegtransfer"] -Action {
-    Get-DatevFile -Url "https://download.datev.de/download/bedi/belegtransfer546.exe" -FileName "belegtransfer546.exe"
-}
-
-Register-ButtonAction -Button $Controls["btnDownloadServerprep"] -Action {
-    Get-DatevFile -Url "https://download.datev.de/download/datevitfix/serverprep.exe" -FileName "serverprep.exe"
-}
-
-Register-ButtonAction -Button $Controls["btnDownloadDeinstallationsnacharbeiten"] -Action {
-    Get-DatevFile -Url "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" -FileName "deinstnacharbeitentool.exe"
-}
 
 Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
     $targetDir = Get-DownloadFolder
@@ -653,19 +630,6 @@ if ($global:Controls["btnCheckUpdateSettings"]) {
             Test-ForUpdate
         })
 }
-
-$Controls["btnArbeitsplatz"].ToolTip = "Startet den DATEV-Arbeitsplatz."
-$Controls["btnInstallationsmanager"].ToolTip = "Startet den DATEV-Installationsmanager."
-$Controls["btnServicetool"].ToolTip = "Startet das DATEV-Servicetool."
-$Controls["btnKonfigDBTools"].ToolTip = "Startet die KonfigDB-Tools."
-$Controls["btnEOAufgabenplanung"].ToolTip = "Startet die EO Aufgabenplanung."
-$Controls["btnEODBconfig"].ToolTip = "Startet die EODBconfig."
-$Controls["btnDownloadSicherheitspaketCompact"].ToolTip = "Lädt das Sicherheitspaket compact herunter."
-$Controls["btnDownloadFernbetreuungOnline"].ToolTip = "Lädt die Fernbetreuung Online herunter."
-$Controls["btnDownloadBelegtransfer"].ToolTip = "Lädt Belegtransfer V. 5.46 herunter."
-$Controls["btnDownloadServerprep"].ToolTip = "Lädt Serverprep herunter."
-$Controls["btnDownloadDeinstallationsnacharbeiten"].ToolTip = "Lädt das Deinstallationsnacharbeiten-Tool herunter."
-$Controls["btnCheckUpdateSettings"].ToolTip = "Prüft das Script auf Updates."
 #endregion
 
 # Startet die automatische Update-Prüfung und zeigt das Hauptfenster an.
