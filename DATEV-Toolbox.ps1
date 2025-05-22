@@ -38,7 +38,8 @@ function Write-Log {
             $global:Controls["txtLog"].ScrollToEnd()
         }
         if ($IsError) { Write-ErrorLog $message }
-    } catch {}
+    }
+    catch {}
 }
 
 function Write-LogDirect {
@@ -99,11 +100,13 @@ function Load-Settings {
                 }
             }
             Write-Log "Einstellungen geladen aus $settingsFile."
-        } catch {
+        }
+        catch {
             $global:Settings = $defaultSettings.Clone()
             Write-Log "Fehler beim Laden der Einstellungen. Verwende Standardwerte. Fehlerdetails: $($_.Exception.Message) | Datei: $settingsFile | Inhalt: $(Get-Content $settingsFile -Raw)" -IsError
         }
-    } else {
+    }
+    else {
         $global:Settings = $defaultSettings.Clone()
         Write-Log "Keine Einstellungen gefunden. Verwende Standardwerte."
     }
@@ -115,7 +118,8 @@ function Save-Settings {
         if (-not $global:Settings) { $global:Settings = $defaultSettings.Clone() }
         $global:Settings | ConvertTo-Json -Depth 5 | Set-Content $settingsFile -Encoding UTF8
         Write-Log "Einstellungen gespeichert nach $settingsFile."
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Speichern der Einstellungen: $($_.Exception.Message)" -IsError
     }
 }
@@ -262,7 +266,8 @@ function Compare-Version {
         $ver1 = [Version]$v1
         $ver2 = [Version]$v2
         return $ver1.CompareTo($ver2)
-    } catch {
+    }
+    catch {
         return [string]::Compare($v1, $v2)
     }
 }
@@ -271,7 +276,8 @@ function Update-DownloadListMetaDisplay {
     param($downloadsMeta)
     if ($downloadsMeta.Version -and $downloadsMeta.Datum) {
         $Controls["txtDownloadListMeta"].Text = "Download-Liste Version: $($downloadsMeta.Version), Datum: $($downloadsMeta.Datum)"
-    } else {
+    }
+    else {
         $Controls["txtDownloadListMeta"].Text = "Download-Liste: keine Metadaten gefunden."
     }
 }
@@ -305,7 +311,7 @@ function Get-DatevFile {
     $fileStream = $null
     try {
         Write-Log "Lade $FileName herunter ..."
-        $window.Dispatcher.Invoke([action]{}, 'Background')
+        $window.Dispatcher.Invoke([action] {}, 'Background')
         $webRequest = [System.Net.WebRequest]::Create($Url)
         $webRequest.Timeout = 60000  # 60 Sekunden
         $response = $webRequest.GetResponse()
@@ -314,10 +320,12 @@ function Get-DatevFile {
         $stream.CopyTo($fileStream)
         Write-Log "Download abgeschlossen: $targetFile"
         [System.Windows.MessageBox]::Show("Download abgeschlossen: $targetFile", "Download", 'OK', 'Information')
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Download: $($_.Exception.Message)" -IsError
         [System.Windows.MessageBox]::Show("Fehler beim Download: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
-    } finally {
+    }
+    finally {
         if ($fileStream) { $fileStream.Close() }
         if ($stream) { $stream.Close() }
         if ($response) { $response.Close() }
@@ -341,11 +349,13 @@ if (Test-Path $dynamicDownloadsFile) {
             $Controls["cmbDynamicDownloads"].SelectedIndex = 0
         }
         Update-DownloadListMetaDisplay $downloadsMeta
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Laden der Download-Liste: $($_.Exception.Message)" -IsError
         $Controls["txtDownloadListMeta"].Text = "Fehler beim Laden der Download-Liste."
     }
-} else {
+}
+else {
     Write-Log "downloads.json nicht gefunden. Das Dropdown bleibt leer."
     $Controls["txtDownloadListMeta"].Text = "downloads.json nicht gefunden."
 }
@@ -360,7 +370,8 @@ Register-ButtonAction -Button $Controls["btnStartDynamicDownload"] -Action {
     $entry = $global:DynamicDownloads[$selIndex]
     if ($entry.Url -and $entry.Name) {
         Get-DatevFile -Url $entry.Url -FileName ([System.IO.Path]::GetFileName($entry.Url))
-    } else {
+    }
+    else {
         [System.Windows.MessageBox]::Show("Ungültiger Eintrag in der Download-Liste.", "Fehler", 'OK', 'Error')
     }
 }
@@ -370,7 +381,7 @@ Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
     $onlineUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/refs/heads/main/downloads.json"
     try {
         Write-Log "Lade aktuelle Download-Liste von $onlineUrl ..."
-        $window.Dispatcher.Invoke([action]{}, 'Background')
+        $window.Dispatcher.Invoke([action] {}, 'Background')
         Invoke-WebRequest -Uri $onlineUrl -OutFile $dynamicDownloadsFile -UseBasicParsing
         Write-Log "Download-Liste erfolgreich heruntergeladen und gespeichert."
         # Nach dem Download die Liste neu laden und Dropdown aktualisieren
@@ -384,7 +395,8 @@ Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
             $Controls["cmbDynamicDownloads"].SelectedIndex = 0
         }
         Update-DownloadListMetaDisplay $downloadsMeta
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)" -IsError
         [System.Windows.MessageBox]::Show("Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
         $Controls["txtDownloadListMeta"].Text = "Fehler beim Herunterladen der Download-Liste."
@@ -405,7 +417,8 @@ function Test-ForUpdate {
         $response = $request.GetResponse()
         if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 0) { $testConnection = $true }
         $response.Close()
-    } catch { $testConnection = $false }
+    }
+    catch { $testConnection = $false }
     if (-not $testConnection) {
         Write-Log "Keine Internetverbindung. Update-Check abgebrochen."
         [System.Windows.MessageBox]::Show("Es konnte keine Internetverbindung festgestellt werden. Der Update-Check wird abgebrochen.", "Update-Fehler", 'OK', 'Error')
@@ -413,7 +426,7 @@ function Test-ForUpdate {
     }
     try {
         Write-Log "Prüfe auf Updates..."
-        $window.Dispatcher.Invoke([action]{}, 'Background')
+        $window.Dispatcher.Invoke([action] {}, 'Background')
         $webRequest = [System.Net.WebRequest]::Create($versionUrl)
         $webRequest.Timeout = 5000
         $response = $webRequest.GetResponse()
@@ -431,17 +444,20 @@ function Test-ForUpdate {
                 if ($PSCommandPath) {
                     $scriptDir = Split-Path -Parent $PSCommandPath
                     $scriptPath = $PSCommandPath
-                } elseif ($MyInvocation.MyCommand.Path) {
+                }
+                elseif ($MyInvocation.MyCommand.Path) {
                     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
                     $scriptPath = $MyInvocation.MyCommand.Path
-                } else {
+                }
+                else {
                     throw 'Konnte den Skriptpfad nicht ermitteln.'
                 }
                 $testFile = Join-Path $scriptDir "_write_test.tmp"
                 try {
                     Set-Content -Path $testFile -Value "test" -ErrorAction Stop
                     Remove-Item -Path $testFile -Force -ErrorAction SilentlyContinue
-                } catch {
+                }
+                catch {
                     Write-Log "Keine Schreibrechte im Scriptverzeichnis: $scriptDir" -IsError
                     [System.Windows.MessageBox]::Show("Das Update kann nicht durchgeführt werden, da keine Schreibrechte im Scriptverzeichnis ($scriptDir) bestehen.", "Update-Fehler", 'OK', 'Error')
                     return
@@ -449,7 +465,7 @@ function Test-ForUpdate {
                 $newScriptPath = Join-Path $scriptDir "DATEV-Toolbox.ps1.new"
                 $updateScriptPath = Join-Path $scriptDir "Update-DATEV-Toolbox.ps1"
                 Write-Log "Lade neue Version herunter..."
-                $window.Dispatcher.Invoke([action]{}, 'Background')
+                $window.Dispatcher.Invoke([action] {}, 'Background')
                 Invoke-WebRequest -Uri $scriptUrl -OutFile $newScriptPath -UseBasicParsing
                 Write-Log "Neue Version wurde als $newScriptPath gespeichert. Update-Vorgang wird vorbereitet."
                 Write-Log "Update abgeschlossen. Changelog siehe: https://github.com/Zdministrator/DATEV-Toolbox/releases"
@@ -471,19 +487,23 @@ Remove-Item -Path '$updateScriptPath' -Force
                 try {
                     Set-Content -Path $updateScriptPath -Value $updateScript -Encoding UTF8
                     Write-Log "Update-Script wurde erstellt: $updateScriptPath"
-                } catch {
+                }
+                catch {
                     Write-Log "Fehler beim Erstellen des Update-Scripts: $_" -IsError
                 }
                 [System.Windows.MessageBox]::Show("Das Programm wird für das Update beendet und automatisch neu gestartet.", "Update wird durchgeführt", 'OK', 'Information')
                 Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$updateScriptPath`"" -WindowStyle Hidden
                 exit
-            } else {
+            }
+            else {
                 Write-Log "Update abgebrochen durch Benutzer."
             }
-        } else {
+        }
+        else {
             Write-Log "Keine neue Version verfügbar."
         }
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Update-Check: $($_.Exception.Message)" -IsError
         Write-ErrorLog "Fehler beim Update-Check: $($_.Exception.Message)"
         [System.Windows.MessageBox]::Show("Fehler beim Update-Check: $($_.Exception.Message)", "Update-Fehler", 'OK', 'Error')
@@ -503,44 +523,48 @@ function Register-ToolButton {
         $btn.ToolTip = "${toolName} nicht gefunden: $exe"
         Write-Log "$toolName nicht gefunden und Button deaktiviert: $exe"
         return
-    } else {
+    }
+    else {
         $btn.ToolTip = "$toolName starten"
     }
     $btn.Add_Click({
-        try {
-            Start-Process -FilePath $exe -ErrorAction Stop
-            Write-LogDirect "$toolName gestartet: $exe"
-        } catch {
-            Write-LogDirect "Fehler beim Start von ${toolName}: $($_.Exception.Message)"
-        }
-    }.GetNewClosure())
+            try {
+                Start-Process -FilePath $exe -ErrorAction Stop
+                Write-LogDirect "$toolName gestartet: $exe"
+            }
+            catch {
+                Write-LogDirect "Fehler beim Start von ${toolName}: $($_.Exception.Message)"
+            }
+        }.GetNewClosure())
 }
 
 function Register-WebLinkHandler {
     param ([System.Windows.Controls.Button]$Button, [string]$Name, [string]$Url)
     $Button.Add_Click({
-        $btnContent = $Button.Content
-        Write-LogDirect "Öffne $btnContent..."
-        $reachable = $false
-        try {
-            $request = [System.Net.WebRequest]::Create($Url)
-            $request.Method = "HEAD"
-            $request.Timeout = 5000
-            $response = $request.GetResponse()
-            $response.Close()
-            $reachable = $true
-        } catch { $reachable = $false }
-        if (-not $reachable) {
-            Write-LogDirect "Keine Verbindung zu $Url möglich – $btnContent wird nicht geöffnet."
-            return
-        }
-        try {
-            Start-Process "explorer.exe" $Url
-            Write-LogDirect "$btnContent geöffnet."
-        } catch {
-            Write-LogDirect ("Fehler beim Öffnen von {0}: {1}" -f $btnContent, $_)
-        }
-    }.GetNewClosure())
+            $btnContent = $Button.Content
+            Write-LogDirect "Öffne $btnContent..."
+            $reachable = $false
+            try {
+                $request = [System.Net.WebRequest]::Create($Url)
+                $request.Method = "HEAD"
+                $request.Timeout = 5000
+                $response = $request.GetResponse()
+                $response.Close()
+                $reachable = $true
+            }
+            catch { $reachable = $false }
+            if (-not $reachable) {
+                Write-LogDirect "Keine Verbindung zu $Url möglich – $btnContent wird nicht geöffnet."
+                return
+            }
+            try {
+                Start-Process "explorer.exe" $Url
+                Write-LogDirect "$btnContent geöffnet."
+            }
+            catch {
+                Write-LogDirect ("Fehler beim Öffnen von {0}: {1}" -f $btnContent, $_)
+            }
+        }.GetNewClosure())
 }
 #endregion
 
@@ -614,19 +638,20 @@ if ($global:Controls["btnLeistungsindex"]) {
     if (-not (Test-Path $exe)) {
         $global:Controls["btnLeistungsindex"].IsEnabled = $false
         $global:Controls["btnLeistungsindex"].ToolTip = "Leistungsindex-Programm nicht gefunden: $exe"
-    } else {
+    }
+    else {
         $global:Controls["btnLeistungsindex"].ToolTip = "Startet den Leistungsindex."
         $global:Controls["btnLeistungsindex"].Add_Click({
-            Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011 -c" -Wait
-            Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011" -Wait
-        })
+                Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011 -c" -Wait
+                Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011" -Wait
+            })
     }
 }
 
 if ($global:Controls["btnCheckUpdateSettings"]) {
     $global:Controls["btnCheckUpdateSettings"].Add_Click({
-        Test-ForUpdate
-    })
+            Test-ForUpdate
+        })
 }
 
 $Controls["btnArbeitsplatz"].ToolTip = "Startet den DATEV-Arbeitsplatz."

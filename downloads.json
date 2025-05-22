@@ -1,11 +1,26 @@
 {
-  "Version": "1.0.1",
-  "Datum": "2025-05-13",
+  "Version": "1.0.2",
+  "Datum": "2025-05-22",
   "Downloads": [
-    { "Name": "Sicherheitspaket compact", "Url": "https://download.datev.de/download/sipacompact/sipacompact.exe" },
+    { "Name": "Sicherheitspaket compact V. 7.88", "Url": "https://download.datev.de/download/sipacompact/sipacompact.exe" },
     { "Name": "Fernbetreuung Online", "Url": "https://download.datev.de/download/fbo-kp/datev_fernbetreuung_online.exe" },
     { "Name": "Belegtransfer V. 5.46", "Url": "https://download.datev.de/download/bedi/belegtransfer546.exe" },
     { "Name": "Serverprep", "Url": "https://download.datev.de/download/datevitfix/serverprep.exe" },
-    { "Name": "Deinstallationsnacharbeiten", "Url": "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" }
+    { "Name": "Deinstallationsnacharbeiten", "Url": "https://download.datev.de/download/deinstallationsnacharbeiten_v311/deinstnacharbeitentool.exe" },
+    { "Name": "DATEV Mittelstand 2025 - Service-Release für V. 13.3", "Url": "https://download.datev.de/download/sr_mittelstand/datev_servicerelease_mittelstand_1338.exe" },
+    { "Name": "Musterpaket DATEV Unternehmen online", "Url": "https://download.datev.de/download/musterpaket_unternehmen_online.zip" },
+    { "Name": "Musterpaket Zusatzmodul Auftragswesen next", "Url": "https://download.datev.de/download/musterpaket_datev_auftragswesen_next.zip" },
+    { "Name": "DATEVnet: Proxyeinstellungen V. 1.8", "Url": "https://download.datev.de/download/proxysetter/proxysetter.exe" },
+    { "Name": "SWM-Treibererweiterung V. 7.88", "Url": "https://download.datev.de/download/srel/swm-treiber-erweiterung_sr_b0000119_7.88.exe" },
+    { "Name": "Sicherheitspaket V. 7.88", "Url": "https://download.datev.de/download/srel/sicherheitspaket_sr_pak00565_7.88.exe" },
+    { "Name": "DATEVnet Einzel-/Telearbeitsplatz", "Url": "https://download.datev.de/download/datevnet/datevnet_einzel-telearbeitsplatz_compact-full.exe" },
+    { "Name": "Herausgeberzertifikate der DATEV", "Url": "https://download.datev.de/download/digcert/datevdigcert_7_81.exe" },
+    { "Name": "DATEV SmartVerify V. 1.4", "Url": "https://download.datev.de/download/smartverify/datev.smartverify.exe" },
+    { "Name": "DATEVasp Zugangspaket V. 2.14", "Url": "https://download.datev.de/download/asp/aspzugangspaket.exe" },
+    { "Name": "DATEV-SmartIT Connect V. 3.9", "Url": "https://download.datev.de/download/smartit/smartitconnect.exe" },
+    { "Name": "Treiber für SmartCard-Lesegeräte und den DATEV mIDentity", "Url": "https://download.datev.de/download/sipacompact/leserins.exe" },
+    { "Name": "LohnViewer", "Url": "https://download.datev.de/download/lohnview/lohnviewer_145.exe" },
+    { "Name": "Lohn Vorerfassung V. 7.1", "Url": "https://download.datev.de/download/lohn_vorerfassung_pak00683_7.1.exe" },
+    { "Name": "DATEV Datenübernahme nach LODAS V. 4.22", "Url": "https://download.datev.de/download/pak01429/lug2lodas_pak_4_22.exe" }
   ]
 }
