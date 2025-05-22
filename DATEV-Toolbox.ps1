@@ -147,6 +147,15 @@ Load-Settings
                 <TabItem Header="DATEV Tools">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Anstehende Update Termine" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <StackPanel Name="spUpdateDates" />
+                                    <Button Name="btnUpdateDates" Content="Termine aktualisieren" Height="26" Margin="0,8,0,0" ToolTip="Lädt die aktuellen Update-Termine aus der ICS-Datei."/>
+                                </StackPanel>
+                            </GroupBox>
                             <Label Content="Programme" FontWeight="Bold" Margin="5"/>
                             <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5" ToolTip="Startet den DATEV-Arbeitsplatz."/>
                             <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5" ToolTip="Startet den DATEV-Installationsmanager."/>
@@ -211,6 +220,22 @@ Load-Settings
                             <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" ToolTip="Prüft das Script auf Updates."/>
                             <Button Name="btnUpdateDownloadList" Content="Download-Liste aktualisieren" Height="30" Margin="5" ToolTip="Lädt die aktuelle Download-Liste von GitHub."/>
                             <Label Content="Einstellungen" FontWeight="Bold" Margin="5"/>
+                            <!-- Systeminformationen -->
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Systeminformationen" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <TextBlock Name="txtSysInfoOS" FontSize="12" Margin="2"/>
+                                    <TextBlock Name="txtSysInfoUser" FontSize="12" Margin="2"/>
+                                    <TextBlock Name="txtSysInfoComputer" FontSize="12" Margin="2"/>
+                                    <TextBlock Name="txtSysInfoPS" FontSize="12" Margin="2"/>
+                                    <TextBlock Name="txtSysInfoDotNet" FontSize="12" Margin="2"/>
+                                    <TextBlock Name="txtSysInfoDisk" FontSize="12" Margin="2"/>
+                                    <TextBlock Name="txtSysInfoDATEVPP" FontSize="12" Margin="2"/>
+                                    <Button Name="btnRefreshSysInfo" Content="Aktualisieren" Width="100" Margin="5,10,0,0" ToolTip="Systeminformationen neu einlesen."/>
+                                </StackPanel>
+                            </GroupBox>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -243,7 +268,11 @@ function Initialize-Controls {
         "btnDATEVHilfeCenter", "btnServicekontaktuebersicht", "btnMyDATEVPortal", "btnDATEVUnternehmenOnline", "btnLogistikauftragOnline",
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
-        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta"
+        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta",
+        # Systeminfo Controls
+        "txtSysInfoOS", "txtSysInfoUser", "txtSysInfoComputer", "txtSysInfoPS", "txtSysInfoDotNet", "txtSysInfoDisk", "txtSysInfoDATEVPP", "btnRefreshSysInfo",
+        # Update Termine Controls
+        "spUpdateDates", "btnUpdateDates"
     )
     foreach ($name in $controlNames) {
         $ctrl = $window.FindName($name)
@@ -254,6 +283,53 @@ function Initialize-Controls {
     }
 }
 Initialize-Controls
+
+# Systeminfo-Funktionen müssen vor dem ersten Aufruf definiert sein!
+function Get-SystemInfo {
+    $os = Get-CimInstance Win32_OperatingSystem
+    $osVersion = "{0} ({1})" -f $os.Caption, $os.Version
+    $user = $env:USERNAME
+    $computer = $env:COMPUTERNAME
+    $psVersion = $PSVersionTable.PSVersion.ToString()
+    # .NET-Versionen
+    $dotNet = (Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' -Recurse -ErrorAction SilentlyContinue |
+        Get-ItemProperty -Name Version -ErrorAction SilentlyContinue |
+        Where-Object { $_.Version -match '^\d' } |
+        Select-Object -ExpandProperty Version -Unique) -join ', '
+    if (-not $dotNet) { $dotNet = "Nicht gefunden" }
+    # Freier Speicher auf C:
+    $sysDrive = (Get-PSDrive -Name C -ErrorAction SilentlyContinue)
+    if ($sysDrive) {
+        $freeGB = [math]::Round($sysDrive.Free/1GB,1)
+        $disk = "Freier Speicher (C:): $freeGB GB"
+    } else {
+        $disk = "Freier Speicher (C:): Nicht ermittelbar"
+    }
+    $datevpp = $env:DATEVPP
+    if (-not $datevpp) { $datevpp = "Nicht gesetzt" }
+    return @{
+        OS = "Betriebssystem: $osVersion"
+        User = "Benutzer: $user"
+        Computer = "Computername: $computer"
+        PS = "PowerShell-Version: $psVersion"
+        DotNet = ".NET-Version(en): $dotNet"
+        Disk = $disk
+        DATEVPP = "DATEVPP: $datevpp"
+    }
+}
+
+function Show-SystemInfo {
+    $info = Get-SystemInfo
+    $Controls["txtSysInfoOS"].Text = $info.OS
+    $Controls["txtSysInfoUser"].Text = $info.User
+    $Controls["txtSysInfoComputer"].Text = $info.Computer
+    $Controls["txtSysInfoPS"].Text = $info.PS
+    $Controls["txtSysInfoDotNet"].Text = $info.DotNet
+    $Controls["txtSysInfoDisk"].Text = $info.Disk
+    $Controls["txtSysInfoDATEVPP"].Text = $info.DATEVPP
+}
+
+Show-SystemInfo
 #endregion
 
 #region Hilfsfunktionen
@@ -632,6 +708,168 @@ if ($global:Controls["btnCheckUpdateSettings"]) {
 }
 #endregion
 
+#region System- und Umgebungsinformationen
+function Get-SystemInfo {
+    $os = Get-CimInstance Win32_OperatingSystem
+    $osVersion = "{0} ({1})" -f $os.Caption, $os.Version
+    $user = $env:USERNAME
+    $computer = $env:COMPUTERNAME
+    $psVersion = $PSVersionTable.PSVersion.ToString()
+    # .NET-Versionen
+    $dotNet = (Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' -Recurse -ErrorAction SilentlyContinue |
+        Get-ItemProperty -Name Version -ErrorAction SilentlyContinue |
+        Where-Object { $_.Version -match '^\d' } |
+        Select-Object -ExpandProperty Version -Unique) -join ', '
+    if (-not $dotNet) { $dotNet = "Nicht gefunden" }
+    # Freier Speicher auf C:
+    $sysDrive = (Get-PSDrive -Name C -ErrorAction SilentlyContinue)
+    if ($sysDrive) {
+        $freeGB = [math]::Round($sysDrive.Free/1GB,1)
+        $disk = "Freier Speicher (C:): $freeGB GB"
+    } else {
+        $disk = "Freier Speicher (C:): Nicht ermittelbar"
+    }
+    $datevpp = $env:DATEVPP
+    if (-not $datevpp) { $datevpp = "Nicht gesetzt" }
+    return @{
+        OS = "Betriebssystem: $osVersion"
+        User = "Benutzer: $user"
+        Computer = "Computername: $computer"
+        PS = "PowerShell-Version: $psVersion"
+        DotNet = ".NET-Version(en): $dotNet"
+        Disk = $disk
+        DATEVPP = "DATEVPP: $datevpp"
+    }
+}
+
+function Show-SystemInfo {
+    $info = Get-SystemInfo
+    $Controls["txtSysInfoOS"].Text = $info.OS
+    $Controls["txtSysInfoUser"].Text = $info.User
+    $Controls["txtSysInfoComputer"].Text = $info.Computer
+    $Controls["txtSysInfoPS"].Text = $info.PS
+    $Controls["txtSysInfoDotNet"].Text = $info.DotNet
+    $Controls["txtSysInfoDisk"].Text = $info.Disk
+    $Controls["txtSysInfoDATEVPP"].Text = $info.DATEVPP
+}
+#endregion
+
+# --- Update Termine aus ICS anzeigen ---
+function Show-NextUpdateDates {
+    Write-Log "Lese Update-Termine aus ICS-Datei ..."
+    $icsFile = Join-Path (Split-Path $dynamicDownloadsFile) 'Jahresplanung_2025.ics'
+    $sp = $Controls["spUpdateDates"]
+    $sp.Children.Clear()
+    if (-not (Test-Path $icsFile)) {
+        Write-Log "Keine lokale ICS-Datei gefunden: $icsFile" -IsError
+        $tb = New-Object System.Windows.Controls.TextBlock
+        $tb.Text = "Keine lokale ICS-Datei gefunden. Bitte erst aktualisieren."
+        $sp.Children.Add($tb) | Out-Null
+        return
+    }
+    try {
+        $icsContent = Get-Content $icsFile -Raw
+        $lines = $icsContent -split "`n"
+        $events = @()
+        $currentEvent = @{}
+        $lastKey = $null
+        foreach ($lineRaw in $lines) {
+            $line = $lineRaw.TrimEnd("`r", "`n")
+            if ($line -eq "BEGIN:VEVENT") { $currentEvent = @{}; $lastKey = $null }
+            elseif ($line -eq "END:VEVENT") {
+                if ($currentEvent.DTSTART -and $currentEvent.SUMMARY) {
+                    $events += [PSCustomObject]@{
+                        DTSTART = $currentEvent.DTSTART
+                        SUMMARY = $currentEvent.SUMMARY
+                        DESCRIPTION = $currentEvent.DESCRIPTION
+                    }
+                }
+                $currentEvent = @{}; $lastKey = $null
+            }
+            elseif ($line -match "^([A-Z]+).*:(.*)$") {
+                $key = $matches[1]
+                $val = $matches[2]
+                $lastKey = $key
+                if ($key -eq "DTSTART") { $currentEvent.DTSTART = $val }
+                elseif ($key -eq "SUMMARY") { $currentEvent.SUMMARY = $val }
+                elseif ($key -eq "DESCRIPTION") { $currentEvent.DESCRIPTION = $val }
+            }
+            elseif ($line -match "^[ \t](.*)$" -and $lastKey) {
+                # Fortgesetzte Zeile (folded line)
+                $continued = $matches[1]
+                if ($lastKey -eq "DESCRIPTION") {
+                    $currentEvent.DESCRIPTION += [Environment]::NewLine + $continued
+                } elseif ($lastKey -eq "SUMMARY") {
+                    $currentEvent.SUMMARY += $continued
+                }
+            }
+        }
+        Write-Log ("ICS: {0} VEVENTs gefunden." -f $events.Count)
+        $now = Get-Date
+        $upcoming = $events | Where-Object {
+            $date = $_.DTSTART
+            if ($date.Length -eq 8) { $date = [datetime]::ParseExact($date, 'yyyyMMdd', $null) }
+            elseif ($date.Length -ge 15) { $date = [datetime]::ParseExact($date.Substring(0,8), 'yyyyMMdd', $null) }
+            else { $date = $null }
+            $date -and $date -ge $now.Date
+        } | Sort-Object {
+            if ($_.DTSTART.Length -eq 8) { [datetime]::ParseExact($_.DTSTART, 'yyyyMMdd', $null) }
+            elseif ($_.DTSTART.Length -ge 15) { [datetime]::ParseExact($_.DTSTART.Substring(0,8), 'yyyyMMdd', $null) }
+            else { $null }
+        } | Select-Object -First 3
+        Write-Log ("{0} anstehende Termine werden angezeigt." -f $upcoming.Count)
+        if ($upcoming.Count -eq 0) {
+            Write-Log "Keine anstehenden Termine gefunden."
+            $tb = New-Object System.Windows.Controls.TextBlock
+            $tb.Text = "Keine anstehenden Termine gefunden."
+            $sp.Children.Add($tb) | Out-Null
+        } else {
+            foreach ($ev in $upcoming) {
+                $date = $ev.DTSTART
+                if ($date.Length -eq 8) { $date = [datetime]::ParseExact($date, 'yyyyMMdd', $null) }
+                elseif ($date.Length -ge 15) { $date = [datetime]::ParseExact($date.Substring(0,8), 'yyyyMMdd', $null) }
+                else { $date = $null }
+                if ($date) {
+                    $tb = New-Object System.Windows.Controls.TextBlock
+                    $tb.Text = "{0:dd.MM.yyyy} - {1}" -f $date, $ev.SUMMARY
+                    if ($ev.DESCRIPTION) { $tb.ToolTip = $ev.DESCRIPTION }
+                    $tb.FontSize = 12
+                    $tb.Margin = '2'
+                    $sp.Children.Add($tb) | Out-Null
+                    Write-Log ("Termin: {0:dd.MM.yyyy} - {1}" -f $date, $ev.SUMMARY)
+                }
+            }
+        }
+    } catch {
+        Write-Log "Fehler beim Laden oder Parsen der ICS-Datei: $($_.Exception.Message)" -IsError
+        $tb = New-Object System.Windows.Controls.TextBlock
+        $tb.Text = "Fehler beim Laden der Termine."
+        $sp.Children.Add($tb) | Out-Null
+    }
+}
+
+Register-ButtonAction -Button $Controls["btnUpdateDates"] -Action {
+    $icsUrl = "https://apps.datev.de/myupdates/assets/files/Jahresplanung_2025.ics"
+    $icsFile = Join-Path (Split-Path $dynamicDownloadsFile) 'Jahresplanung_2025.ics'
+    $sp = $Controls["spUpdateDates"]
+    $sp.Children.Clear()
+    $tb = New-Object System.Windows.Controls.TextBlock
+    $tb.Text = "Lade ICS-Datei ..."
+    $sp.Children.Add($tb) | Out-Null
+    try {
+        Invoke-WebRequest -Uri $icsUrl -OutFile $icsFile -UseBasicParsing -TimeoutSec 15
+        $sp.Children.Clear()
+        $tb = New-Object System.Windows.Controls.TextBlock
+        $tb.Text = "ICS-Datei geladen. Lese Termine ..."
+        $sp.Children.Add($tb) | Out-Null
+        Show-NextUpdateDates
+    } catch {
+        $sp.Children.Clear()
+        $tb = New-Object System.Windows.Controls.TextBlock
+        $tb.Text = "Fehler beim Laden der ICS-Datei."
+        $sp.Children.Add($tb) | Out-Null
+    }
+}
 # Startet die automatische Update-Prüfung und zeigt das Hauptfenster an.
 Test-ForUpdate
 $window.ShowDialog() | Out-Null
