@@ -775,6 +775,26 @@ foreach ($entry in $cloudButtons) {
 if ($Controls["btnMyUpdateLink"]) {
     Register-WebLinkHandler -Button $Controls["btnMyUpdateLink"] -Name "btnMyUpdateLink" -Url "https://apps.datev.de/myupdates/home"
 }
+# Event-Handler für den Button 'Script auf Update prüfen' im Tab Einstellungen
+if ($Controls["btnCheckUpdateSettings"]) {
+    Register-ButtonAction -Button $Controls["btnCheckUpdateSettings"] -Action {
+        Write-Log "Benutzeraktion: Script auf Update prüfen geklickt."
+        Test-ForUpdate
+    }
+}
+# Event-Handler für den Button 'Download Ordner öffnen'
+if ($Controls["btnOpenDownloadFolder"]) {
+    Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
+        $folder = Get-DownloadFolder
+        Write-Log "Öffne Download-Ordner: $folder"
+        try {
+            Start-Process explorer.exe $folder
+        } catch {
+            Write-Log "Fehler beim Öffnen des Download-Ordners: $($_.Exception.Message)" -IsError
+            [System.Windows.MessageBox]::Show("Fehler beim Öffnen des Download-Ordners: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
+        }
+    }
+}
 #endregion
 
 #region System- und Umgebungsinformationen
