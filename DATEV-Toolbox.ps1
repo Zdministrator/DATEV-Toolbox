@@ -156,54 +156,103 @@ Write-Log "Initialisiere Benutzeroberfläche ..."
                                 </GroupBox.Header>
                                 <StackPanel>
                                     <StackPanel Name="spUpdateDates" />
-                                    <Button Name="btnUpdateDates" Content="Termine aktualisieren" Height="26" Margin="0,8,0,0" ToolTip="Lädt die aktuellen Update-Termine aus der ICS-Datei."/>
+                                    <Button Name="btnUpdateDates" Content="Termine aktualisieren" Height="22" Margin="5" ToolTip="Lädt die aktuellen Update-Termine aus der ICS-Datei."/>
                                 </StackPanel>
                             </GroupBox>
-                            <Label Content="Programme" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5" ToolTip="Startet den DATEV-Arbeitsplatz."/>
-                            <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5" ToolTip="Startet den DATEV-Installationsmanager."/>
-                            <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5" ToolTip="Startet das DATEV-Servicetool."/>
-                            <Label Content="Tools" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5" ToolTip="Startet die KonfigDB-Tools."/>
-                            <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5" ToolTip="Startet die EODBconfig."/>
-                            <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5" ToolTip="Startet die EO Aufgabenplanung."/>
-                            <Label Content="Performance" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnNgenAll40" Content="Native Images erzwingen" Height="30" Margin="5" ToolTip="Erzwingt die Erstellung von .NET Native Images (ngenall40)."/>
-                            <Button Name="btnLeistungsindex" Content="Leistungsindex" Height="30" Margin="5" ToolTip="Startet den Leistungsindex."/>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Programme" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnArbeitsplatz" Content="DATEV-Arbeitsplatz" Height="30" Margin="5" ToolTip="Startet den DATEV-Arbeitsplatz."/>
+                                    <Button Name="btnInstallationsmanager" Content="Installationsmanager" Height="30" Margin="5" ToolTip="Startet den DATEV-Installationsmanager."/>
+                                    <Button Name="btnServicetool" Content="Servicetool" Height="30" Margin="5" ToolTip="Startet das DATEV-Servicetool."/>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Tools" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnKonfigDBTools" Content="KonfigDB-Tools" Height="30" Margin="5" ToolTip="Startet die KonfigDB-Tools."/>
+                                    <Button Name="btnEODBconfig" Content="EODBconfig" Height="30" Margin="5" ToolTip="Startet die EODBconfig."/>
+                                    <Button Name="btnEOAufgabenplanung" Content="EO Aufgabenplanung" Height="30" Margin="5" ToolTip="Startet die EO Aufgabenplanung."/>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Performance" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnNgenAll40" Content="Native Images erzwingen" Height="30" Margin="5" ToolTip="Erzwingt die Erstellung von .NET Native Images (ngenall40)."/>
+                                    <Button Name="btnLeistungsindex" Content="Leistungsindex" Height="30" Margin="5" ToolTip="Startet den Leistungsindex."/>
+                                </StackPanel>
+                            </GroupBox>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
                 <TabItem Header="Cloud Anwendungen">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
-                            <Label Content="Hilfe und Support" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5" ToolTip="Öffnet das DATEV Hilfe Center (Web)."/>
-                            <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5" ToolTip="Öffnet die Servicekontaktübersicht (Web)."/>
-                            <Label Content="Cloud" FontWeight="Bold" Margin="5"/>                    
-                            <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5" ToolTip="Öffnet das MyDATEV Portal (Web)."/>
-                            <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5" ToolTip="Öffnet DATEV Unternehmen Online (Web)."/>
-                            <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5" ToolTip="Öffnet Logistikauftrag Online (Web)."/>
-                            <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5" ToolTip="Öffnet die Lizenzverwaltung Online (Web)."/>
-                            <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5" ToolTip="Öffnet den DATEV Rechteraum online (Web)."/>
-                            <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5" ToolTip="Öffnet die DATEV Rechteverwaltung online (Web)."/>
-                            <Label Content="Verwaltung und Technik" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5" ToolTip="Öffnet die SmartLogin Administration (Web)."/>
-                            <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5" ToolTip="Öffnet das MyDATEV Bestandsmanagement (Web)."/>
-                            <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5" ToolTip="Zeigt weitere DATEV Cloud-Anwendungen (Web)."/>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Hilfe und Support" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnDATEVHilfeCenter"          Content="DATEV Hilfe Center"          Height="30" Margin="5" ToolTip="Öffnet das DATEV Hilfe Center (Web)."/>
+                                    <Button Name="btnServicekontaktuebersicht" Content="Servicekontakte"      Height="30" Margin="5" ToolTip="Öffnet die Servicekontaktübersicht (Web)."/>
+                                    <Button Name="btnMyUpdateLink" Content="DATEV myUpdate" Height="30" Margin="5" ToolTip="Öffnet DATEV myUpdate (Web)."/>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Cloud" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnMyDATEVPortal"             Content="MyDATEV Portal"              Height="30" Margin="5" ToolTip="Öffnet das MyDATEV Portal (Web)."/>
+                                    <Button Name="btnDATEVUnternehmenOnline"    Content="DATEV Unternehmen Online"   Height="30" Margin="5" ToolTip="Öffnet DATEV Unternehmen Online (Web)."/>
+                                    <Button Name="btnLogistikauftragOnline"      Content="Logistikauftrag Online"     Height="30" Margin="5" ToolTip="Öffnet Logistikauftrag Online (Web)."/>
+                                    <Button Name="btnLizenzverwaltungOnline"     Content="Lizenzverwaltung Online"    Height="30" Margin="5" ToolTip="Öffnet die Lizenzverwaltung Online (Web)."/>
+                                    <Button Name="btnDATEVRechteraumOnline"      Content="DATEV Rechteraum online"    Height="30" Margin="5" ToolTip="Öffnet den DATEV Rechteraum online (Web)."/>
+                                    <Button Name="btnDATEVRechteverwaltungOnline" Content="DATEV Rechteverwaltung online" Height="30" Margin="5" ToolTip="Öffnet die DATEV Rechteverwaltung online (Web)."/>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Verwaltung und Technik" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnSmartLoginAdministration"   Content="SmartLogin Administration"  Height="30" Margin="5" ToolTip="Öffnet die SmartLogin Administration (Web)."/>
+                                    <Button Name="btnMyDATEVBestandsmanagement"   Content="MyDATEV Bestandsmanagement" Height="30" Margin="5" ToolTip="Öffnet das MyDATEV Bestandsmanagement (Web)."/>
+                                    <Button Name="btnWeitereCloudAnwendungen"    Content="Weitere Cloud Anwendungen"  Height="30" Margin="5" ToolTip="Zeigt weitere DATEV Cloud-Anwendungen (Web)."/>
+                                </StackPanel>
+                            </GroupBox>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
                 <TabItem Header="Downloads">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
-                            <Label Content="Direkt Downloads von Liste:" FontWeight="Bold" Margin="5"/>
-                            <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="0,0,0,0" ToolTip="Wählen Sie einen Eintrag für den Direkt-Download."/>
-                            <TextBlock Name="txtDownloadListMeta" FontSize="10" Foreground="Gray" Margin="5" HorizontalAlignment="Center" />
-                            <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="0,10,0,0" ToolTip="Startet den Download des gewählten Eintrags."/>
-                            <Label Content="Downloads von datev.de" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5" ToolTip="Öffnet den offiziellen DATEV Downloadbereich (Web)."/>
-                            <Button Name="btnDatevSmartDocs" Content="DATEV Smart Docs" Height="30" Margin="5" ToolTip="Öffnet die DATEV Smart Docs Downloadseite (Web)."/>
-                            <Button Name="btnDatentraegerDownloadPortal" Content="Datenträger Download Portal" Height="30" Margin="5" ToolTip="Öffnet das Datenträger Download Portal (Web)."/>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Direkt Downloads von Liste" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="0,0,0,0" ToolTip="Wählen Sie einen Eintrag für den Direkt-Download."/>
+                                    <TextBlock Name="txtDownloadListMeta" FontSize="10" Foreground="Gray" Margin="5" HorizontalAlignment="Center" />
+                                    <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="0,10,0,0" ToolTip="Startet den Download des gewählten Eintrags."/>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Downloads von datev.de" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnDatevDownloadbereich" Content="DATEV Downloadbereich" Height="30" Margin="5" ToolTip="Öffnet den offiziellen DATEV Downloadbereich (Web)."/>
+                                    <Button Name="btnDatevSmartDocs" Content="DATEV Smart Docs" Height="30" Margin="5" ToolTip="Öffnet die DATEV Smart Docs Downloadseite (Web)."/>
+                                    <Button Name="btnDatentraegerDownloadPortal" Content="Datenträger Download Portal" Height="30" Margin="5" ToolTip="Öffnet das Datenträger Download Portal (Web)."/>
+                                </StackPanel>
+                            </GroupBox>
                             <Button Name="btnOpenDownloadFolder" Height="32" Width="32" Margin="10,20,10,10" ToolTip="Download-Ordner öffnen">
                                 <Button.Content>
                                     <Viewbox Width="24" Height="24">
@@ -219,11 +268,23 @@ Write-Log "Initialisiere Benutzeroberfläche ..."
                 <TabItem Header="Einstellungen">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
-                            <Label Content="Update Funktionen" FontWeight="Bold" Margin="5"/>
-                            <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" ToolTip="Prüft das Script auf Updates."/>
-                            <Button Name="btnUpdateDownloadList" Content="Download-Liste aktualisieren" Height="30" Margin="5" ToolTip="Lädt die aktuelle Download-Liste von GitHub."/>
-                            <Label Content="Einstellungen" FontWeight="Bold" Margin="5"/>
-                            <!-- Systeminformationen -->
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Update Funktionen" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <Button Name="btnCheckUpdateSettings" Content="Script auf Update prüfen" Height="30" Margin="5" ToolTip="Prüft das Script auf Updates."/>
+                                    <Button Name="btnUpdateDownloadList" Content="Download-Liste aktualisieren" Height="30" Margin="5" ToolTip="Lädt die aktuelle Download-Liste von GitHub."/>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Einstellungen" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <!-- Hier könnten weitere Einstellungen ergänzt werden -->
+                                </StackPanel>
+                            </GroupBox>
                             <GroupBox Margin="5,5,5,5">
                                 <GroupBox.Header>
                                     <TextBlock Text="Systeminformationen" FontWeight="Bold" FontSize="12"/>
@@ -256,7 +317,7 @@ Write-Log "UI geladen."
 
 #region Version und Titel
 # Definiert die lokale Version des Skripts und setzt den Fenstertitel.
-$localVersion = "1.0.11"
+$localVersion = "1.0.12"
 $window.Title = "DATEV Toolbox v$localVersion"
 Write-Log "Script-Version: $localVersion"
 #endregion
@@ -276,14 +337,17 @@ function Initialize-Controls {
         # Systeminfo Controls
         "txtSysInfoOS", "txtSysInfoUser", "txtSysInfoComputer", "txtSysInfoPS", "txtSysInfoDotNet", "txtSysInfoDisk", "txtSysInfoDATEVPP", "btnRefreshSysInfo",
         # Update Termine Controls
-        "spUpdateDates", "btnUpdateDates"
+        "spUpdateDates", "btnUpdateDates",
+        # MyUpdate Link
+        "btnMyUpdateLink"
     )
     foreach ($name in $controlNames) {
         $ctrl = $window.FindName($name)
         $global:Controls[$name] = $ctrl
         if (-not $ctrl) {
             Write-Log "Warnung: Control '$name' wurde im XAML nicht gefunden." -IsError
-        } else {
+        }
+        else {
             Write-Log "Control initialisiert: $name"
         }
     }
@@ -306,21 +370,22 @@ function Get-SystemInfo {
     # Freier Speicher auf C:
     $sysDrive = (Get-PSDrive -Name C -ErrorAction SilentlyContinue)
     if ($sysDrive) {
-        $freeGB = [math]::Round($sysDrive.Free/1GB,1)
+        $freeGB = [math]::Round($sysDrive.Free / 1GB, 1)
         $disk = "Freier Speicher (C:): $freeGB GB"
-    } else {
+    }
+    else {
         $disk = "Freier Speicher (C:): Nicht ermittelbar"
     }
     $datevpp = $env:DATEVPP
     if (-not $datevpp) { $datevpp = "Nicht gesetzt" }
     return @{
-        OS = "Betriebssystem: $osVersion"
-        User = "Benutzer: $user"
+        OS       = "Betriebssystem: $osVersion"
+        User     = "Benutzer: $user"
         Computer = "Computername: $computer"
-        PS = "PowerShell-Version: $psVersion"
-        DotNet = ".NET-Version(en): $dotNet"
-        Disk = $disk
-        DATEVPP = "DATEVPP: $datevpp"
+        PS       = "PowerShell-Version: $psVersion"
+        DotNet   = ".NET-Version(en): $dotNet"
+        Disk     = $disk
+        DATEVPP  = "DATEVPP: $datevpp"
     }
 }
 
@@ -706,31 +771,9 @@ foreach ($entry in $cloudButtons) {
     }
 }
 
-Register-ButtonAction -Button $Controls["btnOpenDownloadFolder"] -Action {
-    $targetDir = Get-DownloadFolder
-    Write-Log "Öffne Download-Ordner..."
-    Start-Process explorer.exe $targetDir
-}
-
-if ($global:Controls["btnLeistungsindex"]) {
-    $exe = "$env:DATEVPP\PROGRAMM\RWAPPLIC\irw.exe"
-    if (-not (Test-Path $exe)) {
-        $global:Controls["btnLeistungsindex"].IsEnabled = $false
-        $global:Controls["btnLeistungsindex"].ToolTip = "Leistungsindex-Programm nicht gefunden: $exe"
-    }
-    else {
-        $global:Controls["btnLeistungsindex"].ToolTip = "Startet den Leistungsindex."
-        $global:Controls["btnLeistungsindex"].Add_Click({
-                Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011 -c" -Wait
-                Start-Process -FilePath $exe -ArgumentList "-ap:PerfIndex -d:IRW20011" -Wait
-            })
-    }
-}
-
-if ($global:Controls["btnCheckUpdateSettings"]) {
-    $global:Controls["btnCheckUpdateSettings"].Add_Click({
-            Test-ForUpdate
-        })
+# Register the DATEV myUpdate link as a web link button
+if ($Controls["btnMyUpdateLink"]) {
+    Register-WebLinkHandler -Button $Controls["btnMyUpdateLink"] -Name "btnMyUpdateLink" -Url "https://apps.datev.de/myupdates/home"
 }
 #endregion
 
@@ -750,21 +793,22 @@ function Get-SystemInfo {
     # Freier Speicher auf C:
     $sysDrive = (Get-PSDrive -Name C -ErrorAction SilentlyContinue)
     if ($sysDrive) {
-        $freeGB = [math]::Round($sysDrive.Free/1GB,1)
+        $freeGB = [math]::Round($sysDrive.Free / 1GB, 1)
         $disk = "Freier Speicher (C:): $freeGB GB"
-    } else {
+    }
+    else {
         $disk = "Freier Speicher (C:): Nicht ermittelbar"
     }
     $datevpp = $env:DATEVPP
     if (-not $datevpp) { $datevpp = "Nicht gesetzt" }
     return @{
-        OS = "Betriebssystem: $osVersion"
-        User = "Benutzer: $user"
+        OS       = "Betriebssystem: $osVersion"
+        User     = "Benutzer: $user"
         Computer = "Computername: $computer"
-        PS = "PowerShell-Version: $psVersion"
-        DotNet = ".NET-Version(en): $dotNet"
-        Disk = $disk
-        DATEVPP = "DATEVPP: $datevpp"
+        PS       = "PowerShell-Version: $psVersion"
+        DotNet   = ".NET-Version(en): $dotNet"
+        Disk     = $disk
+        DATEVPP  = "DATEVPP: $datevpp"
     }
 }
 
@@ -805,8 +849,8 @@ function Show-NextUpdateDates {
             elseif ($line -eq "END:VEVENT") {
                 if ($currentEvent.DTSTART -and $currentEvent.SUMMARY) {
                     $events += [PSCustomObject]@{
-                        DTSTART = $currentEvent.DTSTART
-                        SUMMARY = $currentEvent.SUMMARY
+                        DTSTART     = $currentEvent.DTSTART
+                        SUMMARY     = $currentEvent.SUMMARY
                         DESCRIPTION = $currentEvent.DESCRIPTION
                     }
                 }
@@ -825,7 +869,8 @@ function Show-NextUpdateDates {
                 $continued = $matches[1]
                 if ($lastKey -eq "DESCRIPTION") {
                     $currentEvent.DESCRIPTION += [Environment]::NewLine + $continued
-                } elseif ($lastKey -eq "SUMMARY") {
+                }
+                elseif ($lastKey -eq "SUMMARY") {
                     $currentEvent.SUMMARY += $continued
                 }
             }
@@ -835,12 +880,12 @@ function Show-NextUpdateDates {
         $upcoming = $events | Where-Object {
             $date = $_.DTSTART
             if ($date.Length -eq 8) { $date = [datetime]::ParseExact($date, 'yyyyMMdd', $null) }
-            elseif ($date.Length -ge 15) { $date = [datetime]::ParseExact($date.Substring(0,8), 'yyyyMMdd', $null) }
+            elseif ($date.Length -ge 15) { $date = [datetime]::ParseExact($date.Substring(0, 8), 'yyyyMMdd', $null) }
             else { $date = $null }
             $date -and $date -ge $now.Date
         } | Sort-Object {
             if ($_.DTSTART.Length -eq 8) { [datetime]::ParseExact($_.DTSTART, 'yyyyMMdd', $null) }
-            elseif ($_.DTSTART.Length -ge 15) { [datetime]::ParseExact($_.DTSTART.Substring(0,8), 'yyyyMMdd', $null) }
+            elseif ($_.DTSTART.Length -ge 15) { [datetime]::ParseExact($_.DTSTART.Substring(0, 8), 'yyyyMMdd', $null) }
             else { $null }
         } | Select-Object -First 3
         Write-Log ("{0} anstehende Termine werden angezeigt." -f $upcoming.Count)
@@ -849,11 +894,12 @@ function Show-NextUpdateDates {
             $tb = New-Object System.Windows.Controls.TextBlock
             $tb.Text = "Keine anstehenden Termine gefunden."
             $sp.Children.Add($tb) | Out-Null
-        } else {
+        }
+        else {
             foreach ($ev in $upcoming) {
                 $date = $ev.DTSTART
                 if ($date.Length -eq 8) { $date = [datetime]::ParseExact($date, 'yyyyMMdd', $null) }
-                elseif ($date.Length -ge 15) { $date = [datetime]::ParseExact($date.Substring(0,8), 'yyyyMMdd', $null) }
+                elseif ($date.Length -ge 15) { $date = [datetime]::ParseExact($date.Substring(0, 8), 'yyyyMMdd', $null) }
                 else { $date = $null }
                 if ($date) {
                     $tb = New-Object System.Windows.Controls.TextBlock
@@ -866,7 +912,8 @@ function Show-NextUpdateDates {
                 }
             }
         }
-    } catch {
+    }
+    catch {
         Write-Log "Fehler beim Laden oder Parsen der ICS-Datei: $($_.Exception.Message)" -IsError
         $tb = New-Object System.Windows.Controls.TextBlock
         $tb.Text = "Fehler beim Laden der Termine."
@@ -891,7 +938,8 @@ Register-ButtonAction -Button $Controls["btnUpdateDates"] -Action {
         $sp.Children.Add($tb) | Out-Null
         Write-Log "ICS-Datei erfolgreich geladen: $icsFile"
         Show-NextUpdateDates
-    } catch {
+    }
+    catch {
         $sp.Children.Clear()
         $tb = New-Object System.Windows.Controls.TextBlock
         $tb.Text = "Fehler beim Laden der ICS-Datei."
@@ -902,7 +950,12 @@ Register-ButtonAction -Button $Controls["btnUpdateDates"] -Action {
 # Startet die automatische Update-Prüfung und zeigt das Hauptfenster an.
 Write-Log "Scriptstart abgeschlossen. UI wird angezeigt."
 Test-ForUpdate
-$window.ShowDialog() | Out-Null
+
+# Zeige das Fenster nur, wenn es noch nicht geschlossen wurde
+if ($window.Visibility -ne 'Closed') {
+    $window.ShowDialog() | Out-Null
+}
+
 Write-Log "UI geschlossen. Speichere Einstellungen ..."
 Save-Settings
 Write-Log "Script beendet."
