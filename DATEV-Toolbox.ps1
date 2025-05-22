@@ -80,12 +80,14 @@ function Get-SettingsFilePath {
     $settingsDir = Join-Path $env:APPDATA 'DATEV-Toolbox'
     if (-not (Test-Path $settingsDir)) {
         New-Item -Path $settingsDir -ItemType Directory | Out-Null
+        Write-Log "Settings-Verzeichnis neu angelegt: $settingsDir"
     }
     return (Join-Path $settingsDir 'settings.json')
 }
 
-function Load-Settings {
+function Import-Settings {
     $settingsFile = Get-SettingsFilePath
+    Write-Log "Lade Einstellungen ..."
     if (Test-Path $settingsFile) {
         try {
             $raw = Get-Content $settingsFile -Raw | ConvertFrom-Json
@@ -125,9 +127,10 @@ function Save-Settings {
 }
 #endregion
 
-Load-Settings
+Import-Settings
 
 #region UI-Initialisierung
+Write-Log "Initialisiere Benutzeroberfläche ..."
 # Lädt das XAML-Layout für das Hauptfenster und initialisiert das WPF-Fensterobjekt.
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -248,14 +251,15 @@ Load-Settings
 "@
 $reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $window = [Windows.Markup.XamlReader]::Load($reader)
+Write-Log "UI geladen."
 #endregion
 
 #region Version und Titel
 # Definiert die lokale Version des Skripts und setzt den Fenstertitel.
 $localVersion = "1.0.11"
 $window.Title = "DATEV Toolbox v$localVersion"
+Write-Log "Script-Version: $localVersion"
 #endregion
-
 
 #region Controls-Initialisierung
 # Sammelt alle relevanten UI-Controls in einer Hashtable für den globalen Zugriff.
@@ -279,6 +283,8 @@ function Initialize-Controls {
         $global:Controls[$name] = $ctrl
         if (-not $ctrl) {
             Write-Log "Warnung: Control '$name' wurde im XAML nicht gefunden." -IsError
+        } else {
+            Write-Log "Control initialisiert: $name"
         }
     }
 }
@@ -319,6 +325,7 @@ function Get-SystemInfo {
 }
 
 function Show-SystemInfo {
+    Write-Log "Lese Systeminformationen ..."
     $info = Get-SystemInfo
     $Controls["txtSysInfoOS"].Text = $info.OS
     $Controls["txtSysInfoUser"].Text = $info.User
@@ -327,6 +334,7 @@ function Show-SystemInfo {
     $Controls["txtSysInfoDotNet"].Text = $info.DotNet
     $Controls["txtSysInfoDisk"].Text = $info.Disk
     $Controls["txtSysInfoDATEVPP"].Text = $info.DATEVPP
+    Write-Log "Systeminformationen aktualisiert."
 }
 
 Show-SystemInfo
@@ -365,6 +373,7 @@ function Get-DownloadFolder {
     $targetDir = Join-Path $targetDir "DATEV-Toolbox"
     if (-not (Test-Path $targetDir)) {
         New-Item -Path $targetDir -ItemType Directory | Out-Null
+        Write-Log "Download-Ordner neu angelegt: $targetDir"
     }
     return $targetDir
 }
@@ -373,6 +382,7 @@ function Get-DatevFile {
     param([string]$Url, [string]$FileName)
     $targetDir = Get-DownloadFolder
     $targetFile = Join-Path $targetDir $FileName
+    Write-Log "Starte Download: $Url -> $targetFile"
     if (Test-Path $targetFile) {
         $result = [System.Windows.MessageBox]::Show("Die Datei '$FileName' existiert bereits. Überschreiben?", "Datei existiert", 'YesNo', 'Warning')
         if ($result -ne 'Yes') {
@@ -408,6 +418,7 @@ function Get-DatevFile {
 #endregion
 
 #region Dynamische Download-Liste laden und Dropdown befüllen
+Write-Log "Lade dynamische Download-Liste ..."
 # Liest die Datei 'downloads.json' ein und befüllt das Dropdown im Download-Tab
 $dynamicDownloadsFile = Join-Path (Join-Path $env:APPDATA 'DATEV-Toolbox') 'downloads.json'
 $global:DynamicDownloads = @()
@@ -423,6 +434,7 @@ if (Test-Path $dynamicDownloadsFile) {
             $Controls["cmbDynamicDownloads"].SelectedIndex = 0
         }
         Update-DownloadListMetaDisplay $downloadsMeta
+        Write-Log "Download-Liste geladen."
     }
     catch {
         Write-Log "Fehler beim Laden der Download-Liste: $($_.Exception.Message)" -IsError
@@ -436,23 +448,28 @@ else {
 
 # Event-Handler für den Button 'Download starten' im dynamischen Bereich
 Register-ButtonAction -Button $Controls["btnStartDynamicDownload"] -Action {
+    Write-Log "Benutzeraktion: Download starten geklickt."
     $selIndex = $Controls["cmbDynamicDownloads"].SelectedIndex
     if ($selIndex -lt 0 -or $selIndex -ge $global:DynamicDownloads.Count) {
         [System.Windows.MessageBox]::Show("Bitte wählen Sie einen Download aus der Liste.", "Hinweis", 'OK', 'Information')
+        Write-Log "Kein Download-Eintrag ausgewählt."
         return
     }
     $entry = $global:DynamicDownloads[$selIndex]
     if ($entry.Url -and $entry.Name) {
+        Write-Log "Starte Download für: $($entry.Name) ($($entry.Url))"
         Get-DatevFile -Url $entry.Url -FileName ([System.IO.Path]::GetFileName($entry.Url))
     }
     else {
         [System.Windows.MessageBox]::Show("Ungültiger Eintrag in der Download-Liste.", "Fehler", 'OK', 'Error')
+        Write-Log "Ungültiger Eintrag in der Download-Liste."
     }
 }
 
 # Event-Handler für den Button 'Download-Liste aktualisieren'
 Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
     $onlineUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/refs/heads/main/downloads.json"
+    Write-Log "Benutzeraktion: Download-Liste aktualisieren geklickt."
     try {
         Write-Log "Lade aktuelle Download-Liste von $onlineUrl ..."
         $window.Dispatcher.Invoke([action] {}, 'Background')
@@ -469,6 +486,7 @@ Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
             $Controls["cmbDynamicDownloads"].SelectedIndex = 0
         }
         Update-DownloadListMetaDisplay $downloadsMeta
+        Write-Log "Download-Liste aktualisiert."
     }
     catch {
         Write-Log "Fehler beim Herunterladen der Download-Liste: $($_.Exception.Message)" -IsError
@@ -483,6 +501,7 @@ Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
 $versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
 $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 function Test-ForUpdate {
+    Write-Log "Starte Update-Check ..."
     $testConnection = $false
     try {
         $request = [System.Net.WebRequest]::Create($versionUrl)
@@ -499,7 +518,7 @@ function Test-ForUpdate {
         return
     }
     try {
-        Write-Log "Prüfe auf Updates..."
+        Write-Log "Prüfe auf Updates ..."
         $window.Dispatcher.Invoke([action] {}, 'Background')
         $webRequest = [System.Net.WebRequest]::Create($versionUrl)
         $webRequest.Timeout = 5000
@@ -515,6 +534,7 @@ function Test-ForUpdate {
             Write-Log "Neue Version gefunden: $remoteVersion (aktuell: $localVersion)"
             $result = [System.Windows.MessageBox]::Show("Neue Version ($remoteVersion) verfügbar. Jetzt herunterladen?", "Update verfügbar", 'YesNo', 'Information')
             if ($result -eq 'Yes') {
+                Write-Log "Update wird durchgeführt ..."
                 if ($PSCommandPath) {
                     $scriptDir = Split-Path -Parent $PSCommandPath
                     $scriptPath = $PSCommandPath
@@ -602,12 +622,14 @@ function Register-ToolButton {
         $btn.ToolTip = "$toolName starten"
     }
     $btn.Add_Click({
+            Write-Log "Starte $toolName ($exe) ..."
             try {
                 Start-Process -FilePath $exe -ErrorAction Stop
                 Write-LogDirect "$toolName gestartet: $exe"
             }
             catch {
                 Write-LogDirect "Fehler beim Start von ${toolName}: $($_.Exception.Message)"
+                Write-Log "Fehler beim Start von ${toolName}: $($_.Exception.Message)" -IsError
             }
         }.GetNewClosure())
 }
@@ -617,6 +639,7 @@ function Register-WebLinkHandler {
     $Button.Add_Click({
             $btnContent = $Button.Content
             Write-LogDirect "Öffne $btnContent..."
+            Write-Log "Öffne Weblink: $btnContent ($Url)"
             $reachable = $false
             try {
                 $request = [System.Net.WebRequest]::Create($Url)
@@ -629,14 +652,17 @@ function Register-WebLinkHandler {
             catch { $reachable = $false }
             if (-not $reachable) {
                 Write-LogDirect "Keine Verbindung zu $Url möglich – $btnContent wird nicht geöffnet."
+                Write-Log "Weblink nicht erreichbar: $Url" -IsError
                 return
             }
             try {
                 Start-Process "explorer.exe" $Url
                 Write-LogDirect "$btnContent geöffnet."
+                Write-Log "Weblink geöffnet: $Url"
             }
             catch {
                 Write-LogDirect ("Fehler beim Öffnen von {0}: {1}" -f $btnContent, $_)
+                Write-Log "Fehler beim Öffnen von ${Url}: $($_.Exception.Message)" -IsError
             }
         }.GetNewClosure())
 }
@@ -856,21 +882,27 @@ Register-ButtonAction -Button $Controls["btnUpdateDates"] -Action {
     $tb = New-Object System.Windows.Controls.TextBlock
     $tb.Text = "Lade ICS-Datei ..."
     $sp.Children.Add($tb) | Out-Null
+    Write-Log "Benutzeraktion: Update-Termine aktualisieren geklickt. Lade ICS von $icsUrl ..."
     try {
         Invoke-WebRequest -Uri $icsUrl -OutFile $icsFile -UseBasicParsing -TimeoutSec 15
         $sp.Children.Clear()
         $tb = New-Object System.Windows.Controls.TextBlock
         $tb.Text = "ICS-Datei geladen. Lese Termine ..."
         $sp.Children.Add($tb) | Out-Null
+        Write-Log "ICS-Datei erfolgreich geladen: $icsFile"
         Show-NextUpdateDates
     } catch {
         $sp.Children.Clear()
         $tb = New-Object System.Windows.Controls.TextBlock
         $tb.Text = "Fehler beim Laden der ICS-Datei."
         $sp.Children.Add($tb) | Out-Null
+        Write-Log "Fehler beim Laden der ICS-Datei: $($_.Exception.Message)" -IsError
     }
 }
 # Startet die automatische Update-Prüfung und zeigt das Hauptfenster an.
+Write-Log "Scriptstart abgeschlossen. UI wird angezeigt."
 Test-ForUpdate
 $window.ShowDialog() | Out-Null
+Write-Log "UI geschlossen. Speichere Einstellungen ..."
 Save-Settings
+Write-Log "Script beendet."
