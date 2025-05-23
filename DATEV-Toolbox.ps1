@@ -134,7 +134,7 @@ Write-Log "Initialisiere Benutzeroberfläche ..."
 # Lädt das XAML-Layout für das Hauptfenster und initialisiert das WPF-Fensterobjekt.
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        Title="DATEV Toolbox" MinHeight="400" Width="400" ResizeMode="CanMinimize">
+        Title="DATEV Toolbox" MinHeight="400" Width="480" ResizeMode="CanMinimize">
     <Window.Resources>
         <!-- Ressourcen können hier definiert werden -->
     </Window.Resources>
@@ -191,6 +191,7 @@ Write-Log "Initialisiere Benutzeroberfläche ..."
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
+
                 <TabItem Header="Cloud Anwendungen">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Vertical" Margin="10">
@@ -238,9 +239,9 @@ Write-Log "Initialisiere Benutzeroberfläche ..."
                                     <TextBlock Text="Direkt Downloads von Liste" FontWeight="Bold" FontSize="12"/>
                                 </GroupBox.Header>
                                 <StackPanel>
-                                    <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="0,0,0,0" ToolTip="Wählen Sie einen Eintrag für den Direkt-Download."/>
+                                    <ComboBox Name="cmbDynamicDownloads" Width="300" Margin="5" ToolTip="Wählen Sie einen Eintrag für den Direkt-Download."/>
                                     <TextBlock Name="txtDownloadListMeta" FontSize="10" Foreground="Gray" Margin="5" HorizontalAlignment="Center" />
-                                    <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="0,10,0,0" ToolTip="Startet den Download des gewählten Eintrags."/>
+                                    <Button Name="btnStartDynamicDownload" Content="Download starten" Height="30" Width="150" Margin="5" ToolTip="Startet den Download des gewählten Eintrags."/>
                                 </StackPanel>
                             </GroupBox>
                             <GroupBox Margin="5,5,5,5">
@@ -262,6 +263,37 @@ Write-Log "Initialisiere Benutzeroberfläche ..."
                                     </Viewbox>
                                 </Button.Content>
                             </Button>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="Checklisten">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical" Margin="10">
+                            <GroupBox Margin="5,5,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Text="Checklistenverwaltung" FontWeight="Bold" FontSize="12"/>
+                                </GroupBox.Header>
+                                <StackPanel>
+                                    <!-- Buttons über dem Dropdown -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                                        <Button Name="btnChecklistNew" Content="Neu" Height="20" Width="120" Margin="5"/>
+                                        <Button Name="btnChecklistDelete" Content="Löschen" Height="20" Width="120" Margin="5"/>
+                                        <Button Name="btnChecklistRename" Content="Umbenennen" Height="20" Width="120"/>
+                                    </StackPanel>
+                                    <!-- Dropdown -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <TextBlock Text="Checkliste:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <ComboBox Name="cmbChecklists" Width="220" Margin="0,0,10,0"/>
+                                        <Button Name="btnAddChecklistItem" Content="+" Width="50" ToolTip="Neuen Checkpunkt hinzufügen"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox Name="gbChecklistContent" Margin="5,10,5,5">
+                                <GroupBox.Header>
+                                    <TextBlock Name="txtChecklistName" Text="Keine Checkliste ausgewählt" FontWeight="Bold" FontSize="12" Margin="10,10,5,5"/>
+                                </GroupBox.Header>
+                                <StackPanel Name="spChecklistDynamic" />
+                            </GroupBox>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -317,7 +349,7 @@ Write-Log "UI geladen."
 
 #region Version und Titel
 # Definiert die lokale Version des Skripts und setzt den Fenstertitel.
-$localVersion = "1.0.12"
+$localVersion = "1.0.13"
 $window.Title = "DATEV Toolbox v$localVersion"
 Write-Log "Script-Version: $localVersion"
 #endregion
@@ -333,13 +365,15 @@ function Initialize-Controls {
         "btnDATEVHilfeCenter", "btnServicekontaktuebersicht", "btnMyDATEVPortal", "btnDATEVUnternehmenOnline", "btnLogistikauftragOnline",
         "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
         "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
-        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta",
-        # Systeminfo Controls
+        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta",        # Systeminfo Controls
         "txtSysInfoOS", "txtSysInfoUser", "txtSysInfoComputer", "txtSysInfoPS", "txtSysInfoDotNet", "txtSysInfoDisk", "txtSysInfoDATEVPP", "btnRefreshSysInfo",
         # Update Termine Controls
-        "spUpdateDates", "btnUpdateDates",
+        "spUpdateDates",
+        "btnUpdateDates",
         # MyUpdate Link
-        "btnMyUpdateLink"
+        "btnMyUpdateLink",
+        # Dynamische Checklistenverwaltung
+        "cmbChecklists", "btnChecklistNew", "btnChecklistDelete", "btnChecklistRename", "spChecklistDynamic", "btnAddChecklistItem", "txtChecklistName"
     )
     foreach ($name in $controlNames) {
         $ctrl = $window.FindName($name)
@@ -353,6 +387,359 @@ function Initialize-Controls {
     }
 }
 Initialize-Controls
+
+# === Dynamische Checklistenverwaltung ===
+
+# Hilfsfunktion: Objekt (rekursiv) in Hashtable umwandeln
+function ConvertTo-Hashtable {
+    param($obj)
+    if ($obj -is [hashtable]) { return $obj }
+    if ($obj -is [pscustomobject]) {
+        $ht = @{}
+        foreach ($prop in $obj.PSObject.Properties) {
+            $ht[$prop.Name] = ConvertTo-Hashtable $prop.Value
+        }
+        return $ht
+    }
+    # Korrekte Typprüfung für String!
+    if ($obj -is [System.Collections.IEnumerable] -and $obj -isnot [string]) {
+        $arr = @()
+        foreach ($item in $obj) { $arr += ConvertTo-Hashtable $item }
+        return $arr
+    }
+    return $obj
+}
+
+$ChecklistDir = Join-Path $env:APPDATA 'DATEV-Toolbox/Checklisten'
+if (-not (Test-Path $ChecklistDir)) {
+    New-Item -Path $ChecklistDir -ItemType Directory | Out-Null
+}
+
+# Hinzufügen globaler Variablen
+$global:Checklists = @()
+$global:CurrentChecklist = $null
+
+# Funktion zum Aktualisieren der Dropdown-Liste
+function Update-ChecklistDropdown {
+    $cmbChecklists = $global:Controls["cmbChecklists"]
+    if (-not $cmbChecklists) { 
+        Write-Log "Fehler: ComboBox für Checklisten nicht gefunden" -IsError
+        return 
+    }
+
+    $cmbChecklists.Items.Clear()
+    foreach ($checklist in $global:Checklists) {
+        [void]$cmbChecklists.Items.Add($checklist.Name)
+    }
+    
+    if ($cmbChecklists.Items.Count -gt 0) {
+        $cmbChecklists.SelectedIndex = 0
+    }
+}
+
+# Funktion zum Laden aller Checklisten
+function Import-Checklists {
+    $global:Checklists = @()
+    
+    Get-ChildItem -Path $ChecklistDir -Filter "*.json" | ForEach-Object {
+        try {
+            $content = Get-Content $_.FullName -Raw | ConvertFrom-Json
+            $newChecklist = @{
+                Name = $content.Name
+                Items = @()
+                FilePath = $_.FullName
+            }
+            
+            if ($content.Items) {
+                foreach ($item in $content.Items) {
+                    $newItem = ConvertTo-Hashtable $item
+                    if (-not $newItem.ContainsKey('Id') -or [string]::IsNullOrWhiteSpace($newItem.Id)) {
+                        $newItem.Id = [guid]::NewGuid().ToString()
+                    }
+                    $newChecklist.Items += $newItem
+                }
+            }
+            
+            $global:Checklists += $newChecklist
+        }
+        catch {
+            Write-Log "Fehler beim Laden der Checkliste $($_.Name): $($_.Exception.Message)" -IsError
+        }
+    }
+    
+    Update-ChecklistDropdown
+    Write-Log "Checklisten geladen: $($global:Checklists.Count) gefunden"
+}
+
+function Save-CurrentChecklist {
+    if (-not $global:CurrentChecklist) { return }
+    
+    try {
+        $content = @{
+            Name = $global:CurrentChecklist.Name
+            Items = $global:CurrentChecklist.Items
+        }
+        $content | ConvertTo-Json -Depth 10 | Set-Content $global:CurrentChecklist.FilePath -Encoding UTF8
+        Write-Log "Checkliste gespeichert: $($global:CurrentChecklist.Name)"
+    }
+    catch {
+        Write-Log "Fehler beim Speichern der Checkliste: $($_.Exception.Message)" -IsError
+    }
+}
+
+function Add-ChecklistItem {
+    param($checklist, $text)
+    if (-not $checklist) { return }
+    
+    $newItem = @{
+        Id = [guid]::NewGuid().ToString()
+        Text = $text
+        IsChecked = $false
+    }
+    
+    $checklist.Items += $newItem
+    Save-CurrentChecklist
+    Show-Checklist $checklist
+}
+
+# Event-Handler für Checkbox-Änderungen
+function Register-CheckboxEvent {
+    param($checkbox, $itemId)
+    
+    $checkbox.Add_Checked({
+        if (-not $global:CurrentChecklist) { return }
+        $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
+        if ($item) {
+            $item.IsChecked = $true
+            Save-CurrentChecklist
+        }
+    })
+    
+    $checkbox.Add_Unchecked({
+        if (-not $global:CurrentChecklist) { return }
+        $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
+        if ($item) {
+            $item.IsChecked = $false
+            Save-CurrentChecklist
+        }
+    })
+}
+
+# Aktualisierte Show-Checklist Funktion
+function Show-Checklist {
+    param($checklist)
+    if (-not $checklist) { 
+        $global:Controls["txtChecklistName"].Text = "Keine Checkliste ausgewählt"
+        return 
+    }
+    $global:CurrentChecklist = $checklist
+    $global:Controls["txtChecklistName"].Text = $checklist.Name
+    
+    $spChecklistDynamic = $global:Controls["spChecklistDynamic"]
+    $spChecklistDynamic.Children.Clear()
+    
+    foreach ($item in $checklist.Items) {
+        $panel = New-Object System.Windows.Controls.StackPanel
+        $panel.Orientation = "Horizontal"
+        $panel.Margin = New-Object System.Windows.Thickness(0, 0, 0, 5)
+        $panel.MaxWidth = 400
+
+        $textBlock = New-Object System.Windows.Controls.TextBlock
+        $textBlock.Text = $item.Text
+        $textBlock.TextWrapping = [System.Windows.TextWrapping]::Wrap
+        $textBlock.MaxWidth = 360
+
+        $checkbox = New-Object System.Windows.Controls.CheckBox
+        $checkbox.Content = $textBlock
+        $checkbox.IsChecked = [System.Convert]::ToBoolean($item.IsChecked)
+        $checkbox.Tag = $item.Id
+        $checkbox.MaxWidth = 380
+        $checkbox.ToolTip = "Klicken Sie hier, um den Status zu ändern. Aktueller Status: $($item.IsChecked ? 'Erledigt' : 'Offen')"
+
+        # Erstelle Kontextmenü
+        $contextMenu = New-Object System.Windows.Controls.ContextMenu
+        
+        # Bearbeiten-Option
+        $editMenuItem = New-Object System.Windows.Controls.MenuItem
+        $editMenuItem.Header = "Bearbeiten"
+        $editMenuItem.Add_Click({
+            param($sender, $e)
+            $itemId = $sender.DataContext
+            $currentItem = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
+            if ($currentItem) {
+                $newText = [Microsoft.VisualBasic.Interaction]::InputBox(
+                    "Text bearbeiten:",
+                    "Eintrag bearbeiten",
+                    $currentItem.Text
+                )
+                if (-not [string]::IsNullOrWhiteSpace($newText) -and $newText -ne $currentItem.Text) {
+                    $currentItem.Text = $newText
+                    Save-CurrentChecklist
+                    Show-Checklist $global:CurrentChecklist
+                    Write-Log "Checklisteneintrag wurde bearbeitet"
+                }
+            }
+        })
+        $editMenuItem.DataContext = $item.Id
+        $contextMenu.Items.Add($editMenuItem)
+
+        # Löschen-Option
+        $deleteMenuItem = New-Object System.Windows.Controls.MenuItem
+        $deleteMenuItem.Header = "Löschen"
+        $deleteMenuItem.Add_Click({
+            param($sender, $e)
+            $itemToDelete = $sender.DataContext
+            $result = [System.Windows.MessageBox]::Show(
+                "Möchten Sie diesen Eintrag wirklich löschen?",
+                "Eintrag löschen",
+                'YesNo',
+                'Warning'
+            )
+            if ($result -eq 'Yes') {
+                $global:CurrentChecklist.Items = @($global:CurrentChecklist.Items | Where-Object { $_.Id -ne $itemToDelete })
+                Save-CurrentChecklist
+                Show-Checklist $global:CurrentChecklist
+                Write-Log "Checklisteneintrag wurde gelöscht"
+            }
+        })
+        $deleteMenuItem.DataContext = $item.Id
+        $contextMenu.Items.Add($deleteMenuItem)
+        
+        $checkbox.ContextMenu = $contextMenu
+        
+        $checkbox.Add_Checked({
+            param($s, $e)
+            $itemId = $s.Tag
+            $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
+            if ($item) {
+                $item.IsChecked = $true
+                Save-CurrentChecklist
+                Write-Log "Checkbox '$($item.Text)' wurde als erledigt markiert"
+            }
+        })
+        
+        $checkbox.Add_Unchecked({
+            param($s, $e)
+            $itemId = $s.Tag
+            $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
+            if ($item) {
+                $item.IsChecked = $false
+                Save-CurrentChecklist
+                Write-Log "Checkbox '$($item.Text)' wurde als unerledigt markiert"
+            }
+        })
+        
+        $panel.Children.Add($checkbox)
+        $spChecklistDynamic.Children.Add($panel)
+    }
+}
+
+# Event-Handler für den "Neu" Button
+Register-ButtonAction -Button $Controls["btnChecklistNew"] -Action {
+    $name = [Microsoft.VisualBasic.Interaction]::InputBox(
+        "Name der neuen Checkliste:",
+        "Neue Checkliste"
+    )
+    
+    if (-not [string]::IsNullOrWhiteSpace($name)) {
+        $filePath = Join-Path $ChecklistDir "$([guid]::NewGuid()).json"
+        $newChecklist = @{
+            Name = $name
+            Items = @()
+            FilePath = $filePath
+        }
+        
+        @{ Name = $name; Items = @() } | 
+            ConvertTo-Json | 
+            Set-Content $filePath -Encoding UTF8
+            
+        $global:Checklists += $newChecklist
+        Update-ChecklistDropdown
+        $Controls["cmbChecklists"].SelectedItem = $name
+        Write-Log "Neue Checkliste erstellt: $name"
+    }
+}
+
+# Event-Handler für den "Löschen" Button
+Register-ButtonAction -Button $Controls["btnChecklistDelete"] -Action {
+    $selectedName = $Controls["cmbChecklists"].SelectedItem
+    if ($selectedName) {
+        $result = [System.Windows.MessageBox]::Show(
+            "Möchten Sie die Checkliste '$selectedName' wirklich löschen?",
+            "Checkliste löschen",
+            'YesNo',
+            'Warning'
+        )
+        if ($result -eq 'Yes') {
+            $checklist = $global:Checklists | Where-Object { $_.Name -eq $selectedName }
+            if ($checklist -and (Test-Path $checklist.FilePath)) {
+                Remove-Item $checklist.FilePath
+            }
+            $global:Checklists = @($global:Checklists | Where-Object { $_.Name -ne $selectedName })
+            $global:CurrentChecklist = $null
+            Update-ChecklistDropdown
+            $Controls["spChecklistDynamic"].Children.Clear()
+            Write-Log "Checkliste gelöscht: $selectedName"
+        }
+    }
+}
+
+# Event-Handler für den "Umbenennen" Button
+Register-ButtonAction -Button $Controls["btnChecklistRename"] -Action {
+    $selectedName = $Controls["cmbChecklists"].SelectedItem
+    if ($selectedName) {
+        $newName = [Microsoft.VisualBasic.Interaction]::InputBox(
+            "Neuer Name für die Checkliste:",
+            "Checkliste umbenennen",
+            $selectedName
+        )
+        if (-not [string]::IsNullOrWhiteSpace($newName) -and $newName -ne $selectedName) {
+            $checklist = $global:Checklists | Where-Object { $_.Name -eq $selectedName }
+            if ($checklist) {
+                $checklist.Name = $newName
+                Save-CurrentChecklist
+                Update-ChecklistDropdown
+                $Controls["cmbChecklists"].SelectedItem = $newName
+                Write-Log "Checkliste umbenannt: $selectedName -> $newName"
+            }
+        }
+    }
+    else {
+        [System.Windows.MessageBox]::Show("Bitte wählen Sie eine Checkliste aus.", "Hinweis", "OK", "Information")
+    }
+}
+
+# Event-Handler für den "+" Button
+Register-ButtonAction -Button $Controls["btnAddChecklistItem"] -Action {
+    if (-not $global:CurrentChecklist) {
+        [System.Windows.MessageBox]::Show("Bitte wählen Sie zuerst eine Checkliste aus.", "Hinweis", "OK", "Information")
+        return
+    }
+    
+    $text = [Microsoft.VisualBasic.Interaction]::InputBox(
+        "Text für den neuen Checkpunkt:",
+        "Checkpunkt hinzufügen"
+    )
+    
+    if (-not [string]::IsNullOrWhiteSpace($text)) {
+        Add-ChecklistItem $global:CurrentChecklist $text
+        Write-Log "Neuer Checkpunkt hinzugefügt: $text"
+    }
+}
+
+# Event-Handler für das Dropdown
+$Controls["cmbChecklists"].Add_SelectionChanged({
+    param($senderObj, $e)
+    $selectedName = $senderObj.SelectedItem
+    if ($selectedName) {
+        $checklist = $global:Checklists | Where-Object { $_.Name -eq $selectedName }
+        Show-Checklist $checklist
+    }
+})
+
+# Lade Checklisten beim Start
+Import-Checklists
+#endregion
 
 # Systeminfo-Funktionen müssen vor dem ersten Aufruf definiert sein!
 function Get-SystemInfo {
@@ -789,7 +1176,8 @@ if ($Controls["btnOpenDownloadFolder"]) {
         Write-Log "Öffne Download-Ordner: $folder"
         try {
             Start-Process explorer.exe $folder
-        } catch {
+        }
+        catch {
             Write-Log "Fehler beim Öffnen des Download-Ordners: $($_.Exception.Message)" -IsError
             [System.Windows.MessageBox]::Show("Fehler beim Öffnen des Download-Ordners: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
         }
@@ -977,5 +1365,6 @@ if ($window.Visibility -ne 'Closed') {
 }
 
 Write-Log "UI geschlossen. Speichere Einstellungen ..."
+Save-CurrentChecklist
 Save-Settings
 Write-Log "Script beendet."
