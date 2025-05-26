@@ -349,7 +349,7 @@ Write-Log "UI geladen."
 
 #region Version und Titel
 # Definiert die lokale Version des Skripts und setzt den Fenstertitel.
-$localVersion = "1.0.13"
+$localVersion = "1.0.14"
 $window.Title = "DATEV Toolbox v$localVersion"
 Write-Log "Script-Version: $localVersion"
 #endregion
@@ -542,19 +542,26 @@ function Show-Checklist {
         $panel = New-Object System.Windows.Controls.StackPanel
         $panel.Orientation = "Horizontal"
         $panel.Margin = New-Object System.Windows.Thickness(0, 0, 0, 5)
-        $panel.MaxWidth = 400
-
+        $panel.MaxWidth = 400        # Create TextBlock for item text
         $textBlock = New-Object System.Windows.Controls.TextBlock
         $textBlock.Text = $item.Text
         $textBlock.TextWrapping = [System.Windows.TextWrapping]::Wrap
         $textBlock.MaxWidth = 360
 
+        # Create CheckBox with proper WPF namespace
         $checkbox = New-Object System.Windows.Controls.CheckBox
         $checkbox.Content = $textBlock
-        $checkbox.IsChecked = [System.Convert]::ToBoolean($item.IsChecked)
+        if ([string]::IsNullOrEmpty($item.IsChecked)) {
+            $checkbox.IsChecked = $false
+        } else {
+            $checkbox.IsChecked = [System.Convert]::ToBoolean($item.IsChecked)
+        }
         $checkbox.Tag = $item.Id
         $checkbox.MaxWidth = 380
-        $checkbox.ToolTip = "Klicken Sie hier, um den Status zu ändern. Aktueller Status: $($item.IsChecked ? 'Erledigt' : 'Offen')"        # Erstelle Kontextmenü
+        $checkStatus = if ($checkbox.IsChecked) { 'Erledigt' } else { 'Offen' }
+        $checkbox.ToolTip = "Klicken Sie hier, um den Status zu ändern. Aktueller Status: $checkStatus"
+
+        # Erstelle Kontextmenü
         $contextMenu = New-Object System.Windows.Controls.ContextMenu
         
         # Bearbeiten-Option
@@ -580,93 +587,52 @@ function Show-Checklist {
             }
         })
         $editMenuItem.DataContext = $item.Id
-        $contextMenu.Items.Add($editMenuItem)        # Nach oben-Option
-        $moveUpMenuItem = New-Object System.Windows.Controls.MenuItem
-        $moveUpMenuItem.Header = "Nach oben"
-        $currentIndex = $global:CurrentChecklist.Items.IndexOf(($global:CurrentChecklist.Items | Where-Object { $_.Id -eq $item.Id }))
-        $moveUpMenuItem.IsEnabled = $currentIndex -gt 0
-        $moveUpMenuItem.Add_Click({
-            param($menuSource, $menuEventArgs)
-            $itemId = $menuSource.DataContext
-            $currentIndex = $global:CurrentChecklist.Items.IndexOf(($global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }))
-            if ($currentIndex -gt 0) {
-                $temp = $global:CurrentChecklist.Items[$currentIndex]
-                $global:CurrentChecklist.Items[$currentIndex] = $global:CurrentChecklist.Items[$currentIndex - 1]
-                $global:CurrentChecklist.Items[$currentIndex - 1] = $temp
-                Save-CurrentChecklist
-                Show-Checklist $global:CurrentChecklist
-                Write-Log "Checklisteneintrag wurde nach oben verschoben"
-            }
-        })
-        $moveUpMenuItem.DataContext = $item.Id
-        $contextMenu.Items.Add($moveUpMenuItem)
+        $contextMenu.Items.Add($editMenuItem)
 
-        # Nach unten-Option
-        $moveDownMenuItem = New-Object System.Windows.Controls.MenuItem
-        $moveDownMenuItem.Header = "Nach unten"
-        $moveDownMenuItem.IsEnabled = $currentIndex -lt ($global:CurrentChecklist.Items.Count - 1)
-        $moveDownMenuItem.Add_Click({
-            param($menuSource, $menuEventArgs)
-            $itemId = $menuSource.DataContext
-            $currentIndex = $global:CurrentChecklist.Items.IndexOf(($global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }))
-            if ($currentIndex -lt $global:CurrentChecklist.Items.Count - 1) {
-                $temp = $global:CurrentChecklist.Items[$currentIndex]
-                $global:CurrentChecklist.Items[$currentIndex] = $global:CurrentChecklist.Items[$currentIndex + 1]
-                $global:CurrentChecklist.Items[$currentIndex + 1] = $temp
-                Save-CurrentChecklist
-                Show-Checklist $global:CurrentChecklist
-                Write-Log "Checklisteneintrag wurde nach unten verschoben"
-            }
-        })
-        $moveDownMenuItem.DataContext = $item.Id
-        $contextMenu.Items.Add($moveDownMenuItem)
-
-        # Löschen-Option
-        $deleteMenuItem = New-Object System.Windows.Controls.MenuItem
-        $deleteMenuItem.Header = "Löschen"
-        $deleteMenuItem.Add_Click({
-            param($menuSource, $menuEventArgs)
-            $itemId = $menuSource.DataContext
-            $result = [System.Windows.MessageBox]::Show(
-                "Möchten Sie diesen Eintrag wirklich löschen?",
-                "Eintrag löschen",
-                'YesNo',
-                'Warning'
-            )
-            if ($result -eq 'Yes') {                $global:CurrentChecklist.Items = @($global:CurrentChecklist.Items | Where-Object { $_.Id -ne $itemId })
-                Save-CurrentChecklist
-                Show-Checklist $global:CurrentChecklist
-                Write-Log "Checklisteneintrag wurde gelöscht"
-            }
-        })
-        $deleteMenuItem.DataContext = $item.Id
-        $contextMenu.Items.Add($deleteMenuItem)
+        # Add context menu to checkbox
         $checkbox.ContextMenu = $contextMenu
         
-        $checkbox.Add_Checked({
-            param($s, $e)
-            $itemId = $s.Tag
-            $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
-            if ($item) {
-                $item.IsChecked = $true
-                Save-CurrentChecklist
-                Write-Log "Checkbox '$($item.Text)' wurde als erledigt markiert"
+        # Register event handlers for checkbox
+        if ($checkbox) {            # Use checked/unchecked event handlers in a PowerShell 5.1 compatible way
+            $checkedScript = {
+                if (-not $global:CurrentChecklist) { return }
+                $itemId = $this.Tag
+                if ($itemId) {
+                    $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
+                    if ($item) {
+                        $item.IsChecked = $true
+                        Save-CurrentChecklist
+                        Write-Log "Checkbox '$($item.Text)' wurde als erledigt markiert"
+                    }
+                }
             }
-        })
-        
-        $checkbox.Add_Unchecked({
-            param($s, $e)
-            $itemId = $s.Tag
-            $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
-            if ($item) {
-                $item.IsChecked = $false
-                Save-CurrentChecklist
-                Write-Log "Checkbox '$($item.Text)' wurde als unerledigt markiert"
+            
+            $uncheckedScript = {
+                if (-not $global:CurrentChecklist) { return }
+                $itemId = $this.Tag
+                if ($itemId) {
+                    $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
+                    if ($item) {
+                        $item.IsChecked = $false
+                        Save-CurrentChecklist
+                        Write-Log "Checkbox '$($item.Text)' wurde als unerledigt markiert"
+                    }
+                }
             }
-        })
+            
+            $checkbox.add_Checked($checkedScript)
+            $checkbox.add_Unchecked($uncheckedScript)
+        }
+
+        # Add checkbox to panel
+        if ($checkbox) {
+            $panel.Children.Add($checkbox)
+        }
         
-        $panel.Children.Add($checkbox)
-        $spChecklistDynamic.Children.Add($panel)
+        # Add panel to main container
+        if ($panel) {
+            $spChecklistDynamic.Children.Add($panel)
+        }
     }
 }
 
