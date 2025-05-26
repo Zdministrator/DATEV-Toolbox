@@ -357,34 +357,61 @@ Write-Log "Script-Version: $localVersion"
 #region Controls-Initialisierung
 # Sammelt alle relevanten UI-Controls in einer Hashtable für den globalen Zugriff.
 function Initialize-Controls {
-    $global:Controls = @{
-        "txtLog" = $window.FindName("txtLog")
+    # Optimierte Control-Initialisierung mit Dictionary für bessere Performance
+    $global:Controls = [System.Collections.Generic.Dictionary[string,object]]::new(50)
+    
+    # Gruppierte Control-Namen für bessere Übersicht und Wartbarkeit
+    $controlGroups = @{
+        'Logging' = @('txtLog')
+        'Programme' = @('btnArbeitsplatz', 'btnInstallationsmanager', 'btnServicetool')
+        'Tools' = @('btnKonfigDBTools', 'btnEODBconfig', 'btnEOAufgabenplanung')
+        'Performance' = @('btnNgenAll40', 'btnLeistungsindex')
+        'Cloud' = @(
+            'btnDATEVHilfeCenter', 'btnServicekontaktuebersicht', 'btnMyDATEVPortal',
+            'btnDATEVUnternehmenOnline', 'btnLogistikauftragOnline', 'btnLizenzverwaltungOnline',
+            'btnDATEVRechteraumOnline', 'btnDATEVRechteverwaltungOnline', 'btnSmartLoginAdministration',
+            'btnMyDATEVBestandsmanagement', 'btnWeitereCloudAnwendungen'
+        )
+        'Downloads' = @(
+            'btnDatevDownloadbereich', 'btnDatevSmartDocs', 'btnDatentraegerDownloadPortal',
+            'btnOpenDownloadFolder', 'cmbDynamicDownloads', 'btnStartDynamicDownload',
+            'btnUpdateDownloadList', 'txtDownloadListMeta'
+        )
+        'SystemInfo' = @(
+            'txtSysInfoOS', 'txtSysInfoUser', 'txtSysInfoComputer', 'txtSysInfoPS',
+            'txtSysInfoDotNet', 'txtSysInfoDisk', 'txtSysInfoDATEVPP', 'btnRefreshSysInfo'
+        )
+        'Updates' = @('spUpdateDates', 'btnUpdateDates', 'btnMyUpdateLink')
+        'Checklisten' = @(
+            'cmbChecklists', 'btnChecklistNew', 'btnChecklistDelete', 'btnChecklistRename',
+            'spChecklistDynamic', 'btnAddChecklistItem', 'txtChecklistName'
+        )
     }
-    $controlNames = @(
-        "btnArbeitsplatz", "btnInstallationsmanager", "btnServicetool", "btnKonfigDBTools", "btnEOAufgabenplanung", "btnEODBconfig",
-        "btnDATEVHilfeCenter", "btnServicekontaktuebersicht", "btnMyDATEVPortal", "btnDATEVUnternehmenOnline", "btnLogistikauftragOnline",
-        "btnLizenzverwaltungOnline", "btnDATEVRechteraumOnline", "btnDATEVRechteverwaltungOnline", "btnSmartLoginAdministration",
-        "btnMyDATEVBestandsmanagement", "btnWeitereCloudAnwendungen", "btnDatevDownloadbereich", "btnDatevSmartDocs", "btnDatentraegerDownloadPortal",
-        "btnOpenDownloadFolder", "btnNgenAll40", "btnLeistungsindex", "btnCheckUpdateSettings", "cmbDynamicDownloads", "btnStartDynamicDownload", "btnUpdateDownloadList", "txtDownloadListMeta",        # Systeminfo Controls
-        "txtSysInfoOS", "txtSysInfoUser", "txtSysInfoComputer", "txtSysInfoPS", "txtSysInfoDotNet", "txtSysInfoDisk", "txtSysInfoDATEVPP", "btnRefreshSysInfo",
-        # Update Termine Controls
-        "spUpdateDates",
-        "btnUpdateDates",
-        # MyUpdate Link
-        "btnMyUpdateLink",
-        # Dynamische Checklistenverwaltung
-        "cmbChecklists", "btnChecklistNew", "btnChecklistDelete", "btnChecklistRename", "spChecklistDynamic", "btnAddChecklistItem", "txtChecklistName"
-    )
-    foreach ($name in $controlNames) {
-        $ctrl = $window.FindName($name)
-        $global:Controls[$name] = $ctrl
-        if (-not $ctrl) {
-            Write-Log "Warnung: Control '$name' wurde im XAML nicht gefunden." -IsError
+
+    # Batch-Initialisierung der Controls im UI-Thread
+    $window.Dispatcher.Invoke([Action]{
+        $missingControls = [System.Collections.Generic.List[string]]::new()
+        
+        foreach ($group in $controlGroups.GetEnumerator()) {
+            Write-Log "Initialisiere Control-Gruppe: $($group.Key)"
+            foreach ($name in $group.Value) {
+                $ctrl = $window.FindName($name)
+                if ($ctrl) {
+                    $global:Controls[$name] = $ctrl
+                }
+                else {
+                    $missingControls.Add($name)
+                }
+            }
         }
-        else {
-            Write-Log "Control initialisiert: $name"
+        
+        # Gesammelte Ausgabe der nicht gefundenen Controls
+        if ($missingControls.Count -gt 0) {
+            Write-Log "Warnung: Folgende Controls wurden nicht gefunden: $($missingControls -join ', ')" -IsError
         }
-    }
+    }, [System.Windows.Threading.DispatcherPriority]::Normal)
+    
+    Write-Log "Control-Initialisierung abgeschlossen. $($global:Controls.Count) Controls gefunden."
 }
 Initialize-Controls
 
@@ -559,9 +586,7 @@ function Show-Checklist {
         $checkbox.Tag = $item.Id
         $checkbox.MaxWidth = 380
         $checkStatus = if ($checkbox.IsChecked) { 'Erledigt' } else { 'Offen' }
-        $checkbox.ToolTip = "Klicken Sie hier, um den Status zu ändern. Aktueller Status: $checkStatus"
-
-        # Erstelle Kontextmenü
+        $checkbox.ToolTip = "Klicken Sie hier, um den Status zu ändern. Aktueller Status: $checkStatus"        # Erstelle Kontextmenü
         $contextMenu = New-Object System.Windows.Controls.ContextMenu
         
         # Bearbeiten-Option
@@ -588,6 +613,77 @@ function Show-Checklist {
         })
         $editMenuItem.DataContext = $item.Id
         $contextMenu.Items.Add($editMenuItem)
+
+        # Löschen-Option
+        $deleteMenuItem = New-Object System.Windows.Controls.MenuItem
+        $deleteMenuItem.Header = "Löschen"
+        $deleteMenuItem.Add_Click({
+            param($menuSource, $menuEventArgs)
+            $itemId = $menuSource.DataContext
+            $result = [System.Windows.MessageBox]::Show(
+                "Möchten Sie diesen Eintrag wirklich löschen?",
+                "Eintrag löschen",
+                'YesNo',
+                'Warning'
+            )
+            if ($result -eq 'Yes') {
+                $global:CurrentChecklist.Items = @($global:CurrentChecklist.Items | Where-Object { $_.Id -ne $itemId })
+                Save-CurrentChecklist
+                Show-Checklist $global:CurrentChecklist
+                Write-Log "Checklisteneintrag wurde gelöscht"
+            }
+        })
+        $deleteMenuItem.DataContext = $item.Id
+        $contextMenu.Items.Add($deleteMenuItem)
+
+        # Separator
+        $separator = New-Object System.Windows.Controls.Separator
+        $contextMenu.Items.Add($separator)
+
+        # Nach oben verschieben-Option
+        $moveUpMenuItem = New-Object System.Windows.Controls.MenuItem
+        $moveUpMenuItem.Header = "Nach oben"
+        $moveUpMenuItem.Add_Click({
+            param($menuSource, $menuEventArgs)
+            $itemId = $menuSource.DataContext
+            $items = $global:CurrentChecklist.Items
+            $index = [array]::IndexOf($items, ($items | Where-Object { $_.Id -eq $itemId }))
+            if ($index -gt 0) {
+                $temp = $items[$index]
+                $items[$index] = $items[$index - 1]
+                $items[$index - 1] = $temp
+                Save-CurrentChecklist
+                Show-Checklist $global:CurrentChecklist
+                Write-Log "Checklisteneintrag wurde nach oben verschoben"
+            }
+        })
+        $moveUpMenuItem.DataContext = $item.Id
+        # Deaktiviere den Menüpunkt, wenn es der erste Eintrag ist
+        $index = [array]::IndexOf($checklist.Items, $item)
+        $moveUpMenuItem.IsEnabled = ($index -gt 0)
+        $contextMenu.Items.Add($moveUpMenuItem)
+
+        # Nach unten verschieben-Option
+        $moveDownMenuItem = New-Object System.Windows.Controls.MenuItem
+        $moveDownMenuItem.Header = "Nach unten"
+        $moveDownMenuItem.Add_Click({
+            param($menuSource, $menuEventArgs)
+            $itemId = $menuSource.DataContext
+            $items = $global:CurrentChecklist.Items
+            $index = [array]::IndexOf($items, ($items | Where-Object { $_.Id -eq $itemId }))
+            if ($index -lt ($items.Count - 1)) {
+                $temp = $items[$index]
+                $items[$index] = $items[$index + 1]
+                $items[$index + 1] = $temp
+                Save-CurrentChecklist
+                Show-Checklist $global:CurrentChecklist
+                Write-Log "Checklisteneintrag wurde nach unten verschoben"
+            }
+        })
+        $moveDownMenuItem.DataContext = $item.Id
+        # Deaktiviere den Menüpunkt, wenn es der letzte Eintrag ist
+        $moveDownMenuItem.IsEnabled = ($index -lt ($checklist.Items.Count - 1))
+        $contextMenu.Items.Add($moveDownMenuItem)
 
         # Add context menu to checkbox
         $checkbox.ContextMenu = $contextMenu
