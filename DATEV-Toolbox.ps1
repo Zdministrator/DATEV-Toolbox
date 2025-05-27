@@ -1,6 +1,12 @@
 ﻿#region Administrator- und Sicherheits-Setup
-# Prüft, ob das Skript mit Administratorrechten läuft und startet es ggf. neu mit erhöhten Rechten.
-# Aktiviert TLS 1.2 für Webanfragen und blendet das PowerShell-Konsolenfenster aus.
+# Setup für Administratorrechte und grundlegende Sicherheitseinstellungen
+#
+# Laden der benötigten Assemblies:
+# - PresentationFramework: Für die WPF-Benutzeroberfläche
+# - VisualBasic: Für InputBox-Dialoge
+Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName Microsoft.VisualBasic
+
 $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $IsAdmin) {
     Add-Type -AssemblyName PresentationFramework
@@ -25,21 +31,47 @@ $consolePtr = [Console.Win]::GetConsoleWindow()
 #endregion
 
 #region Logging-Funktionen
-# Funktionen für die Protokollierung von Aktionen und Fehlern im Log-Feld und in einer Datei.
+# Implementiert ein umfassendes Logging-System mit folgenden Funktionen:
+# - Write-Log: Hauptfunktion für das Logging mit UI-Ausgabe und optionaler Fehlerprotokollierung
+# - Write-LogDirect: Direkte Ausgabe in das UI-Log ohne zusätzliche Formatierung
+# - Write-ErrorLog: Speichert Fehlermeldungen in einer separaten Logdatei
+# - Context-basiertes Logging für bessere Nachvollziehbarkeit
 function Write-Log {
     param(
-        [string]$message,
-        [switch]$IsError
+        [string]$message,      # Die zu protokollierende Nachricht
+        [switch]$IsError,      # Markiert die Nachricht als Fehler
+        [string]$Context = ""  # Optionaler Kontext für bessere Zuordnung
     )
     $timestamp = Get-Date -Format 'HH:mm:ss'
     try {
+        # Format the message with context if provided
+        $logMessage = if ($Context) {
+            "[$timestamp] [$Context] $message"
+        } else {
+            "[$timestamp] $message"
+        }
+
         if ($null -ne $global:Controls["txtLog"]) {
-            $global:Controls["txtLog"].AppendText("[$timestamp] $message`n")
+            $global:Controls["txtLog"].AppendText("$logMessage`n")
             $global:Controls["txtLog"].ScrollToEnd()
         }
-        if ($IsError) { Write-ErrorLog $message }
+        
+        # For errors, always include context in error log if available
+        if ($IsError) { 
+            $errorMessage = if ($Context) {
+                "[$Context] $message"
+            } else {
+                $message
+            }
+            Write-ErrorLog $errorMessage 
+        }
     }
-    catch {}
+    catch {
+        # If we can't write to the UI, at least try to write to the error log
+        if ($IsError) {
+            Write-ErrorLog "UI-Logging fehlgeschlagen: $message"
+        }
+    }
 }
 
 function Write-LogDirect {
@@ -69,11 +101,18 @@ function Register-ButtonAction {
 #endregion
 
 #region Settings-Funktionen
-# Standardwerte für Einstellungen zentral definieren
+# Verwaltung der Anwendungseinstellungen
+#
+# Enthält Funktionen für:
+# - Laden und Speichern von Einstellungen im JSON-Format
+# - Automatische Migration und Ergänzung fehlender Einstellungen
+# - Fehlerbehandlung beim Laden/Speichern
+#
+# Die Einstellungen werden im APPDATA-Verzeichnis des Benutzers gespeichert
 $defaultSettings = @{
-    # Beispiel-Keys, nach Bedarf anpassen/erweitern
-    "Sprache" = "de"
-    # ...weitere Standardwerte...
+    # Basiseinstellungen der Anwendung
+    "Sprache" = "de"  # Standardsprache: Deutsch
+    # Weitere Einstellungen hier ergänzen
 }
 
 function Get-SettingsFilePath {
@@ -131,7 +170,10 @@ Import-Settings
 
 #region UI-Initialisierung
 Write-Log "Initialisiere Benutzeroberfläche ..."
-# Lädt das XAML-Layout für das Hauptfenster und initialisiert das WPF-Fensterobjekt.
+# Benutzeroberflächen-Initialisierung
+# - Lädt das XAML-Layout für das Hauptfenster und initialisiert das WPF-Fensterobjekt
+# - Definiert das Basis-Layout mit einem responsiven Grid-System
+# - Stellt die Benutzeroberfläche im DATEV-konformen Design dar
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         Title="DATEV Toolbox" MinHeight="400" Width="480" ResizeMode="CanMinimize">
@@ -348,16 +390,25 @@ Write-Log "UI geladen."
 #endregion
 
 #region Version und Titel
-# Definiert die lokale Version des Skripts und setzt den Fenstertitel.
+# Versionsverwaltung und Fenstertitel
+# - Definiert die aktuelle Version des Toolbox-Skripts
+# - Ermöglicht Versions-Tracking für Updates
+# - Stellt die Versionsnummer im Fenstertitel dar für bessere Benutzerorientierung
 $localVersion = "1.0.14"
 $window.Title = "DATEV Toolbox v$localVersion"
 Write-Log "Script-Version: $localVersion"
 #endregion
 
 #region Controls-Initialisierung
-# Sammelt alle relevanten UI-Controls in einer Hashtable für den globalen Zugriff.
+# Initialisierung und Verwaltung aller UI-Steuerelemente
+# 
+# Diese Funktion:
+# - Sammelt alle UI-Controls in einem optimierten Dictionary
+# - Gruppiert Controls nach funktionalen Bereichen
+# - Protokolliert fehlende Controls für einfachere Fehlersuche
+# - Initialisiert Controls Thread-sicher im UI-Dispatcher
 function Initialize-Controls {
-    # Optimierte Control-Initialisierung mit Dictionary für bessere Performance
+    # Optimiertes Dictionary für bessere Performance bei häufigen Zugriffen
     $global:Controls = [System.Collections.Generic.Dictionary[string,object]]::new(50)
     
     # Gruppierte Control-Namen für bessere Übersicht und Wartbarkeit
@@ -467,9 +518,11 @@ function Update-ChecklistDropdown {
 # Funktion zum Laden aller Checklisten
 function Import-Checklists {
     $global:Checklists = @()
+    Write-Log "Starte Import der Checklisten aus: $ChecklistDir"
     
     Get-ChildItem -Path $ChecklistDir -Filter "*.json" | ForEach-Object {
         try {
+            Write-Log "Importiere Checkliste: $($_.Name)"
             $content = Get-Content $_.FullName -Raw | ConvertFrom-Json
             $newChecklist = @{
                 Name = $content.Name
@@ -478,16 +531,21 @@ function Import-Checklists {
             }
             
             if ($content.Items) {
+                $itemCount = 0
                 foreach ($item in $content.Items) {
                     $newItem = ConvertTo-Hashtable $item
                     if (-not $newItem.ContainsKey('Id') -or [string]::IsNullOrWhiteSpace($newItem.Id)) {
                         $newItem.Id = [guid]::NewGuid().ToString()
+                        Write-Log "Neue ID generiert für Item in $($content.Name)"
                     }
                     $newChecklist.Items += $newItem
+                    $itemCount++
                 }
+                Write-Log "Erfolgreich $itemCount Items in Checkliste '$($content.Name)' geladen"
             }
             
             $global:Checklists += $newChecklist
+            Write-Log "Checkliste '$($content.Name)' erfolgreich importiert"
         }
         catch {
             Write-Log "Fehler beim Laden der Checkliste $($_.Name): $($_.Exception.Message)" -IsError
@@ -495,22 +553,57 @@ function Import-Checklists {
     }
     
     Update-ChecklistDropdown
-    Write-Log "Checklisten geladen: $($global:Checklists.Count) gefunden"
+    Write-Log "Checklisten-Import abgeschlossen: $($global:Checklists.Count) Checklisten geladen"
 }
 
 function Save-CurrentChecklist {
-    if (-not $global:CurrentChecklist) { return }
+    if (-not $global:CurrentChecklist) { 
+        Write-Log "Keine aktuelle Checkliste zum Speichern vorhanden" -IsError -Context "Checklisten"
+        return 
+    }
+    
+    if (-not $global:CurrentChecklist.FilePath) {
+        Write-Log "Ungültige Checkliste: Kein Dateipfad definiert für '$($global:CurrentChecklist.Name)'" -IsError -Context "Checklisten"
+        return
+    }
     
     try {
+        Write-Log "Speichere Checkliste" -Context $global:CurrentChecklist.Name
         $content = @{
             Name = $global:CurrentChecklist.Name
             Items = $global:CurrentChecklist.Items
         }
+        
+        # Prüfe ob das Verzeichnis existiert
+        $directory = Split-Path $global:CurrentChecklist.FilePath -Parent
+        if (-not (Test-Path $directory)) {
+            Write-Log "Erstelle Verzeichnis: $directory" -Context $global:CurrentChecklist.Name
+            New-Item -Path $directory -ItemType Directory -Force | Out-Null
+        }
+        
+        # Speichern mit Backup
+        if (Test-Path $global:CurrentChecklist.FilePath) {
+            $backupPath = "$($global:CurrentChecklist.FilePath).bak"
+            Copy-Item $global:CurrentChecklist.FilePath $backupPath -Force
+        }
+        
         $content | ConvertTo-Json -Depth 10 | Set-Content $global:CurrentChecklist.FilePath -Encoding UTF8
-        Write-Log "Checkliste gespeichert: $($global:CurrentChecklist.Name)"
+        Write-Log "Checkliste erfolgreich gespeichert mit $($global:CurrentChecklist.Items.Count) Items" -Context $global:CurrentChecklist.Name
     }
     catch {
-        Write-Log "Fehler beim Speichern der Checkliste: $($_.Exception.Message)" -IsError
+        Write-Log "Fehler beim Speichern der Checkliste: $($_.Exception.Message)" -IsError -Context $global:CurrentChecklist.Name
+        
+        # Versuche das Backup wiederherzustellen wenn vorhanden
+        $backupPath = "$($global:CurrentChecklist.FilePath).bak"
+        if (Test-Path $backupPath) {
+            try {
+                Copy-Item $backupPath $global:CurrentChecklist.FilePath -Force
+                Write-Log "Backup der Checkliste wiederhergestellt" -Context $global:CurrentChecklist.Name
+            }
+            catch {
+                Write-Log "Fehler bei der Wiederherstellung des Backups: $($_.Exception.Message)" -IsError -Context $global:CurrentChecklist.Name
+            }
+        }
     }
 }
 
@@ -687,31 +780,49 @@ function Show-Checklist {
 
         # Add context menu to checkbox
         $checkbox.ContextMenu = $contextMenu
-        
-        # Register event handlers for checkbox
-        if ($checkbox) {            # Use checked/unchecked event handlers in a PowerShell 5.1 compatible way
-            $checkedScript = {
-                if (-not $global:CurrentChecklist) { return }
+          # Register event handlers for checkbox
+        if ($checkbox) {        $checkedScript = {
+                if (-not $global:CurrentChecklist) { 
+                    Write-Log "Checkbox-Event ignoriert: Keine aktuelle Checkliste ausgewählt" -IsError -Context "Checklisten"
+                    return 
+                }
                 $itemId = $this.Tag
                 if ($itemId) {
                     $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
                     if ($item) {
                         $item.IsChecked = $true
-                        Save-CurrentChecklist
-                        Write-Log "Checkbox '$($item.Text)' wurde als erledigt markiert"
+                        try {
+                            Save-CurrentChecklist
+                            Write-Log "Aufgabe erledigt: '$($item.Text)'" -Context $global:CurrentChecklist.Name
+                        } catch {
+                            Write-Log "Fehler beim Speichern des Aufgabenstatus: $($_.Exception.Message)" -IsError -Context $global:CurrentChecklist.Name
+                            $item.IsChecked = $false # Setze den Status zurück bei Fehler
+                        }
+                    } else {
+                        Write-Log "Checkbox-Event: Item mit ID $itemId nicht gefunden" -IsError -Context $global:CurrentChecklist.Name
                     }
                 }
             }
             
             $uncheckedScript = {
-                if (-not $global:CurrentChecklist) { return }
+                if (-not $global:CurrentChecklist) { 
+                    Write-Log "Checkbox-Event ignoriert: Keine aktuelle Checkliste ausgewählt" -IsError -Context "Checklisten"
+                    return 
+                }
                 $itemId = $this.Tag
                 if ($itemId) {
                     $item = $global:CurrentChecklist.Items | Where-Object { $_.Id -eq $itemId }
                     if ($item) {
                         $item.IsChecked = $false
-                        Save-CurrentChecklist
-                        Write-Log "Checkbox '$($item.Text)' wurde als unerledigt markiert"
+                        try {
+                            Save-CurrentChecklist
+                            Write-Log "Aufgabe zurückgesetzt: '$($item.Text)'" -Context $global:CurrentChecklist.Name
+                        } catch {
+                            Write-Log "Fehler beim Speichern des Aufgabenstatus: $($_.Exception.Message)" -IsError -Context $global:CurrentChecklist.Name
+                            $item.IsChecked = $true # Setze den Status zurück bei Fehler
+                        }
+                    } else {
+                        Write-Log "Checkbox-Event: Item mit ID $itemId nicht gefunden" -IsError -Context $global:CurrentChecklist.Name
                     }
                 }
             }
@@ -734,27 +845,52 @@ function Show-Checklist {
 
 # Event-Handler für den "Neu" Button
 Register-ButtonAction -Button $Controls["btnChecklistNew"] -Action {
-    $name = [Microsoft.VisualBasic.Interaction]::InputBox(
-        "Name der neuen Checkliste:",
-        "Neue Checkliste"
-    )
-    
-    if (-not [string]::IsNullOrWhiteSpace($name)) {
-        $filePath = Join-Path $ChecklistDir "$([guid]::NewGuid()).json"
-        $newChecklist = @{
-            Name = $name
-            Items = @()
-            FilePath = $filePath
-        }
+    Write-Log "Button 'Neue Checkliste' geklickt" -Context "Checklisten"
+    try {
+        $name = [Microsoft.VisualBasic.Interaction]::InputBox(
+            "Name der neuen Checkliste:",
+            "Neue Checkliste"
+        )
         
-        @{ Name = $name; Items = @() } | 
-            ConvertTo-Json | 
-            Set-Content $filePath -Encoding UTF8
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            $filePath = Join-Path $ChecklistDir "$([guid]::NewGuid()).json"
+            $newChecklist = @{
+                Name = $name
+                Items = @()
+                FilePath = $filePath
+            }
             
-        $global:Checklists += $newChecklist
-        Update-ChecklistDropdown
-        $Controls["cmbChecklists"].SelectedItem = $name
-        Write-Log "Neue Checkliste erstellt: $name"
+            # Stelle sicher, dass das Verzeichnis existiert
+            if (-not (Test-Path $ChecklistDir)) {
+                New-Item -Path $ChecklistDir -ItemType Directory -Force | Out-Null
+                Write-Log "Checklistenverzeichnis erstellt" -Context "Checklisten"
+            }
+            
+            # Speichere die neue Checkliste
+            @{ Name = $name; Items = @() } | 
+                ConvertTo-Json | 
+                Set-Content $filePath -Encoding UTF8
+                
+            $global:Checklists += $newChecklist
+            Update-ChecklistDropdown
+            $Controls["cmbChecklists"].SelectedItem = $name
+            Write-Log "Neue Checkliste erstellt: $name" -Context "Checklisten"
+            
+            # Wähle die neue Checkliste aus und zeige sie an
+            Show-Checklist $newChecklist
+        }
+        else {
+            Write-Log "Erstellung der Checkliste abgebrochen - kein Name eingegeben" -Context "Checklisten"
+        }
+    }
+    catch {
+        Write-Log "Fehler beim Erstellen der Checkliste: $($_.Exception.Message)" -IsError -Context "Checklisten"
+        [System.Windows.MessageBox]::Show(
+            "Fehler beim Erstellen der Checkliste: $($_.Exception.Message)",
+            "Fehler",
+            'OK',
+            'Error'
+        )
     }
 }
 
@@ -891,7 +1027,12 @@ Show-SystemInfo
 #endregion
 
 #region Hilfsfunktionen
-# Diverse Hilfsfunktionen, z.B. für Versionsvergleiche.
+# Utility-Funktionen und Hilfsmethoden
+# - Stellt Versionsvergleichslogik für Update-Prüfungen bereit
+# - Verwaltet Metadaten-Anzeige für Download-Listen
+# - Implementiert häufig verwendete Hilfsmethoden
+# - Unterstützt konsistente Fehlerbehandlung
+# - Bietet Datums- und Zeitformatierung
 function Compare-Version {
     param([string]$v1, [string]$v2)
     try {
@@ -916,7 +1057,12 @@ function Update-DownloadListMetaDisplay {
 #endregion
 
 #region Download-Funktionen
-# Funktionen zum Ermitteln des Download-Ordners und Herunterladen von Dateien mit Fortschritts- und Fehlerbehandlung.
+# Download-Management und Dateiverwaltung
+# - Ermittelt und erstellt bei Bedarf den DATEV-Toolbox Download-Ordner
+# - Implementiert sicheres Herunterladen mit Fortschrittsanzeige
+# - Behandelt Netzwerk- und Dateisystemfehler
+# - Überprüft Dateivollständigkeit nach dem Download
+# - Verwaltet temporäre Dateien und Aufräumprozesse
 function Get-DownloadFolder {
     $downloads = [Environment]::GetFolderPath('UserProfile')
     $targetDir = Join-Path $downloads "Downloads"
@@ -968,8 +1114,12 @@ function Get-DatevFile {
 #endregion
 
 #region Dynamische Download-Liste laden und Dropdown befüllen
-Write-Log "Lade dynamische Download-Liste ..."
-# Liest die Datei 'downloads.json' ein und befüllt das Dropdown im Download-Tab
+# Download-Listen-Management
+# - Lädt die dynamische Download-Konfiguration aus downloads.json
+# - Aktualisiert die UI-Komponenten mit verfügbaren Downloads
+# - Verwaltet Metadaten (Version, Datum) der Download-Liste
+# - Implementiert automatische Aktualisierung der Download-Optionen
+# - Stellt Konsistenz zwischen lokaler und Remote-Liste sicher
 $dynamicDownloadsFile = Join-Path (Join-Path $env:APPDATA 'DATEV-Toolbox') 'downloads.json'
 $global:DynamicDownloads = @()
 if (Test-Path $dynamicDownloadsFile) {
@@ -1047,7 +1197,12 @@ Register-ButtonAction -Button $Controls["btnUpdateDownloadList"] -Action {
 #endregion
 
 #region Update-Funktionen
-# Funktionen zum Prüfen und Durchführen von Updates des Skripts über GitHub.
+# Automatische Update-Verwaltung
+# - Prüft regelmäßig auf neue Versionen der DATEV-Toolbox
+# - Vergleicht lokale und Remote-Version auf GitHub
+# - Führt automatische Updates durch mit Benutzerbestätigung
+# - Sichert die aktuelle Version vor dem Update
+# - Protokolliert alle Update-Vorgänge im Log
 $versionUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/version.txt"
 $scriptUrl = "https://raw.githubusercontent.com/Zdministrator/DATEV-Toolbox/main/DATEV-Toolbox.ps1"
 function Test-ForUpdate {
@@ -1156,7 +1311,11 @@ Remove-Item -Path '$updateScriptPath' -Force
 #endregion
 
 #region Button- und Event-Handler-Registrierung
-# Funktionen zur Registrierung von Event-Handlern für Buttons und Weblinks.
+# Event-Handler-Management
+# - Zentrale Registrierung aller Button-Events und Weblink-Handler
+# - Thread-sichere Event-Ausführung im UI-Dispatcher
+# - Fehlerbehandlung für nicht verfügbare Programme oder Links
+# - Logging aller Button-Aktionen für Nachverfolgbarkeit
 function Register-ToolButton {
     param ([string]$ButtonVar, [string]$ExePath, [string]$ToolName)
     $btn = $Controls[$ButtonVar]
@@ -1219,7 +1378,12 @@ function Register-WebLinkHandler {
 #endregion
 
 #region Button- und Event-Handler-Zuordnung
-# Ordnet die definierten Funktionen den jeweiligen Buttons und Aktionen im UI zu.
+# Button-Event Konfiguration und Initialisierung
+# - Konfiguriert DATEV-Toolbuttons mit Pfadvalidierung
+# - Initialisiert Cloud-Service Weblinks mit Erreichbarkeitsprüfung
+# - Setzt Update- und Download-Funktionalität
+# - Implementiert dynamisches Button-State-Management
+# - Stellt Konsistenz der UI-Interaktionen sicher
 $toolButtons = @(
     @{ Button = "btnInstallationsmanager"; Exe = "$env:DATEVPP\PROGRAMM\INSTALL\DvInesInstMan.exe"; Name = "Installationsmanager" },
     @{ Button = "btnServicetool"; Exe = "$env:DATEVPP\PROGRAMM\SRVTOOL\Srvtool.exe"; Name = "Servicetool" },
@@ -1284,6 +1448,12 @@ if ($Controls["btnOpenDownloadFolder"]) {
 #endregion
 
 #region System- und Umgebungsinformationen
+# Systemanalyse und Umgebungsinformationen
+# - Ermittelt detaillierte Systeminformationen für Diagnose
+# - Überwacht kritische Systemressourcen (Speicher, .NET-Version)
+# - Prüft DATEV-spezifische Umgebungsvariablen
+# - Stellt Systeminformationen übersichtlich im UI dar
+# - Ermöglicht Echtzeit-Aktualisierung der Systemdaten
 function Get-SystemInfo {
     $os = Get-CimInstance Win32_OperatingSystem
     $osVersion = "{0} ({1})" -f $os.Caption, $os.Version
@@ -1330,7 +1500,12 @@ function Show-SystemInfo {
 }
 #endregion
 
-# --- Update Termine aus ICS anzeigen ---
+# Update-Termin-Verwaltung
+# - Liest und parst DATEV Update-Termine aus ICS-Datei
+# - Zeigt anstehende Update-Termine übersichtlich im UI an
+# - Ermöglicht manuelle Aktualisierung der Termindaten
+# - Filtert und sortiert relevante Termine
+# - Stellt Termin-Details wie Beschreibungen zur Verfügung
 function Show-NextUpdateDates {
     Write-Log "Lese Update-Termine aus ICS-Datei ..."
     $icsFile = Join-Path (Split-Path $dynamicDownloadsFile) 'Jahresplanung_2025.ics'
@@ -1453,7 +1628,12 @@ Register-ButtonAction -Button $Controls["btnUpdateDates"] -Action {
         Write-Log "Fehler beim Laden der ICS-Datei: $($_.Exception.Message)" -IsError
     }
 }
-# Startet die automatische Update-Prüfung und zeigt das Hauptfenster an.
+# UI-Initialisierung und Programmende
+# - Startet die automatische Update-Prüfung beim Programmstart
+# - Zeigt das Hauptfenster und wartet auf Benutzerinteraktion
+# - Führt sauberes Cleanup beim Beenden durch (Settings speichern)
+# - Protokolliert den gesamten Programmzyklus
+
 Write-Log "Scriptstart abgeschlossen. UI wird angezeigt."
 Test-ForUpdate
 
