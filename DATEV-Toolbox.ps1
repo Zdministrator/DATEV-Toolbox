@@ -433,6 +433,7 @@ function Initialize-Controls {
             'txtSysInfoDotNet', 'txtSysInfoDisk', 'txtSysInfoDATEVPP', 'btnRefreshSysInfo'
         )
         'Updates' = @('spUpdateDates', 'btnUpdateDates', 'btnMyUpdateLink')
+        'Settings' = @('btnCheckUpdateSettings')
         'Checklisten' = @(
             'cmbChecklists', 'btnChecklistNew', 'btnChecklistDelete', 'btnChecklistRename',
             'spChecklistDynamic', 'btnAddChecklistItem', 'txtChecklistName'
@@ -1442,6 +1443,32 @@ if ($Controls["btnOpenDownloadFolder"]) {
         catch {
             Write-Log "Fehler beim Öffnen des Download-Ordners: $($_.Exception.Message)" -IsError
             [System.Windows.MessageBox]::Show("Fehler beim Öffnen des Download-Ordners: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
+        }
+    }
+}
+
+# Event-Handler für den Button 'Leistungsindex'
+if ($Controls["btnLeistungsindex"]) {
+    Register-ButtonAction -Button $Controls["btnLeistungsindex"] -Action {
+        Write-Log "Benutzeraktion: Leistungsindex geklickt."
+        $irwPath = "$env:DATEVPP\PROGRAMM\RWAPPLIC\irw.exe"
+        
+        if (Test-Path $irwPath) {
+            try {
+                Write-Log "Starte Leistungsindex-Analyse mit irw.exe..."
+                # Erster Aufruf: mit -c Parameter (Create/Clean)
+                Start-Process -FilePath $irwPath -ArgumentList "-ap:PerfIndex -d:IRW20011 -c" -Wait
+                # Zweiter Aufruf: ohne -c Parameter (Run)
+                Start-Process -FilePath $irwPath -ArgumentList "-ap:PerfIndex -d:IRW20011" -Wait
+                Write-Log "Leistungsindex-Analyse erfolgreich abgeschlossen."
+            }
+            catch {
+                Write-Log "Fehler beim Starten der Leistungsindex-Analyse: $($_.Exception.Message)" -IsError
+                [System.Windows.MessageBox]::Show("Fehler beim Starten der Leistungsindex-Analyse: $($_.Exception.Message)", "Fehler", 'OK', 'Error')
+            }
+        } else {
+            Write-Log "irw.exe nicht gefunden unter: $irwPath" -IsError
+            [System.Windows.MessageBox]::Show("Die Datei irw.exe wurde nicht gefunden unter:`n$irwPath`n`nBitte überprüfen Sie Ihre DATEV-Installation.", "DATEV-Tool nicht gefunden", 'OK', 'Warning')
         }
     }
 }
